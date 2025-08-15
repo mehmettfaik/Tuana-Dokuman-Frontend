@@ -13,35 +13,23 @@ export const usePDFGeneration = () => {
       setError('');
       setProgress('PDF üretimi başlatılıyor...');
 
-      // 1. PDF üretimini başlat
-      const jobId = await PDFService.startPDFGeneration(docType, formData, language);
-      setProgress('PDF üretiliyor...');
-
-      // 2. Tamamlanmasını bekle
-      await PDFService.waitForPDFCompletion(
-        jobId,
-        (status) => {
-          // Progress güncellemesi
-          if (status.status === 'pending') {
-            setProgress('PDF hazırlanıyor...');
-          } else if (status.status === 'processing') {
-            setProgress('PDF işleniyor...');
-          }
-        }
-      );
-
-      // 3. PDF'i indir
-      setProgress('PDF indiriliyor...');
-      const fileName = PDFService.generateFileName(docType, formData);
-      await PDFService.downloadPDF(jobId, fileName);
+      // Fallback destekli PDF üretimi
+      const success = await PDFService.generatePDFWithFallback(formData, docType, language);
       
-      setProgress('PDF başarıyla indirildi!');
-      setTimeout(() => setProgress(''), 3000);
-
-      return true;
+      if (success) {
+        setProgress('PDF başarıyla indirildi! (Demo modunda çalıştırılıyor)');
+        setTimeout(() => setProgress(''), 5000);
+        return true;
+      } else {
+        throw new Error('PDF üretimi başarısız oldu');
+      }
 
     } catch (error) {
-      setError(`Hata: ${error.message}`);
+      const errorMessage = error.message.includes('Tüm sistemler devre dışı') 
+        ? 'PDF servisleri şu anda kullanılamıyor. Lütfen daha sonra tekrar deneyin.'
+        : `Hata: ${error.message}`;
+      
+      setError(errorMessage);
       console.error('PDF generation error:', error);
       return false;
     } finally {

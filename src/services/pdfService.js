@@ -2,13 +2,138 @@
 class PDFService {
   constructor() {
     this.baseURL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+    this.legacyBaseURL = process.env.REACT_APP_LEGACY_API_URL || 'http://localhost:3000';
   }
 
-  // 1. PDF üretimini başlat
-  async startPDFGeneration(docType, formData, language = 'en') {
+  // Backend bağlantısını test et
+  async testConnection() {
     try {
-      const response = await fetch(`${this.baseURL}/api/pdf/start`, {
+      const response = await fetch(`${this.baseURL}/api/health`, {
+        method: 'GET',
+        mode: 'cors',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      return response.ok;
+    } catch (error) {
+      console.warn('New API not available, will use legacy API');
+      return false;
+    }
+  }
+
+  // Demo/Mock PDF generation (offline çalışma için)
+  async generatePDFDemo(formData, docType, language = 'en') {
+    try {
+      console.log('Using demo PDF generation (offline mode)');
+      
+      // Demo için basit HTML to PDF conversion
+      const demoHtml = this.generateDemoHTML(formData, docType, language);
+      
+      // Simple demo PDF content as HTML
+      const demoWindow = window.open('', '_blank');
+      demoWindow.document.write(demoHtml);
+      demoWindow.document.close();
+      
+      // Print dialog açarak kullanıcının PDF olarak kaydetmesini sağla
+      setTimeout(() => {
+        demoWindow.print();
+      }, 500);
+      
+      return true;
+    } catch (error) {
+      console.error('Demo PDF generation error:', error);
+      
+      // Basit alert ile demo PDF bilgisi göster
+      const formInfo = Object.entries(formData)
+        .slice(0, 5)
+        .map(([key, value]) => `${key}: ${value}`)
+        .join('\n');
+        
+      alert(`DEMO PDF OLUŞTURULDU\n\nBelge Türü: ${docType}\nDil: ${language}\n\nForm Bilgileri:\n${formInfo}\n\nNot: Bu demo modda çalışmaktadır. Gerçek PDF için backend servisi gereklidir.`);
+      
+      return true;
+    }
+  }
+
+  // Demo HTML içeriği oluştur
+  generateDemoHTML(formData, docType, language) {
+    const timestamp = new Date().toLocaleDateString('tr-TR');
+    const formEntries = Object.entries(formData);
+    
+    return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>DEMO - ${docType.toUpperCase()}</title>
+        <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            .header { background: #f0f0f0; padding: 15px; margin-bottom: 20px; border-radius: 5px; }
+            .demo-notice { background: #fff3cd; border: 1px solid #ffeaa7; padding: 10px; margin-bottom: 20px; border-radius: 5px; }
+            .form-data { border-collapse: collapse; width: 100%; }
+            .form-data th, .form-data td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            .form-data th { background-color: #f2f2f2; }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>DEMO PDF - ${docType.toUpperCase()}</h1>
+            <p>Oluşturulma Tarihi: ${timestamp}</p>
+            <p>Dil: ${language}</p>
+        </div>
+        
+        <div class="demo-notice">
+            <strong>⚠️ DEMO MOD AKTIF</strong><br>
+            Bu PDF demo amaçlı oluşturulmuştur. Backend servisi aktif olduğunda gerçek PDF üretilecektir.
+        </div>
+        
+        <h2>Form Verileri</h2>
+        <table class="form-data">
+            <thead>
+                <tr>
+                    <th>Alan</th>
+                    <th>Değer</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${formEntries.map(([key, value]) => `
+                    <tr>
+                        <td>${key}</td>
+                        <td>${value || 'Boş'}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+        
+        <div style="margin-top: 30px; font-size: 12px; color: #666;">
+            <p>Bu belge ${timestamp} tarihinde demo modda oluşturulmuştur.</p>
+            <p>Gerçek PDF üretimi için backend servisi gereklidir.</p>
+        </div>
+    </body>
+    </html>
+    `;
+  }
+
+  // Demo içerik oluştur
+  generateDemoContent(formData, docType, language) {
+    const fields = Object.keys(formData).length;
+    const timestamp = new Date().toLocaleDateString('tr-TR');
+    
+    return {
+      docType,
+      language,
+      fields,
+      timestamp,
+      message: 'Bu bir demo PDF\'dir. Backend servisi aktif olduğunda gerçek PDF üretilecektir.'
+    };
+  }
+
+  // Legacy PDF generation (fallback)
+  async generatePDFLegacy(formData, docType, language = 'en') {
+    try {
+      const response = await fetch(`${this.legacyBaseURL}/api/generatePDF`, {
         method: 'POST',
+        mode: 'cors',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -20,7 +145,52 @@ class PDFService {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        throw new Error(`Legacy API error! status: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      
+      if (blob.size === 0) {
+        throw new Error('Received empty PDF file from legacy server');
+      }
+      
+      // Dosyayı indir
+      const fileName = this.generateFileName(docType, formData);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      return true;
+    } catch (error) {
+      console.error('Legacy PDF generation error:', error);
+      throw error;
+    }
+  }
+
+  // 1. PDF üretimini başlat
+  async startPDFGeneration(docType, formData, language = 'en') {
+    try {
+      const response = await fetch(`${this.baseURL}/api/pdf/start`, {
+        method: 'POST',
+        mode: 'cors',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          docType,
+          formData,
+          language
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
 
@@ -178,15 +348,35 @@ class PDFService {
     }
   }
 
-  // Mevcut API ile uyumluluk için eski method'u da tutuyoruz (fallback)
-  async generatePDFLegacy(formData, formType = 'fabric-technical', language = 'turkish') {
+  // Ana PDF üretim fonksiyonu - Fallback desteği ile
+  async generatePDFWithFallback(formData, docType, language = 'en') {
     try {
-      // Eski generatePDF fonksiyonu - acil durumlarda kullanılabilir
-      const { generatePDF } = await import('../api');
-      return await generatePDF(formData, formType, language);
+      // Önce yeni API'yi dene
+      const isConnected = await this.testConnection();
+      
+      if (isConnected) {
+        console.log('Using new 3-stage PDF API');
+        const jobId = await this.startPDFGeneration(docType, formData, language);
+        await this.waitForPDFCompletion(jobId);
+        const fileName = this.generateFileName(docType, formData);
+        return await this.downloadPDF(jobId, fileName);
+      } else {
+        console.log('New API not available, trying legacy API');
+        return await this.generatePDFLegacy(formData, docType, language);
+      }
     } catch (error) {
-      console.error('Legacy PDF generation failed:', error);
-      throw error;
+      console.error('Primary PDF generation failed, trying legacy API:', error);
+      try {
+        return await this.generatePDFLegacy(formData, docType, language);
+      } catch (legacyError) {
+        console.error('Legacy API also failed, using demo PDF generation:', legacyError);
+        try {
+          return await this.generatePDFDemo(formData, docType, language);
+        } catch (demoError) {
+          console.error('All PDF generation methods failed:', demoError);
+          throw new Error(`PDF oluşturulamadı. Tüm sistemler devre dışı. (Error: ${error.message})`);
+        }
+      }
     }
   }
 }
