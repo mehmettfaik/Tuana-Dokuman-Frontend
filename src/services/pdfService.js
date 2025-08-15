@@ -7,16 +7,34 @@ class PDFService {
   // Backend bağlantısını test et
   async testConnection() {
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 saniye timeout
+      
       const response = await fetch(`${this.baseURL}/api/health`, {
         method: 'GET',
         mode: 'cors',
         headers: {
           'Content-Type': 'application/json',
         },
+        signal: controller.signal
       });
-      return response.ok;
+      
+      clearTimeout(timeoutId);
+      
+      if (response.ok) {
+        const data = await response.json().catch(() => ({}));
+        console.log('Backend health check:', data);
+        return true;
+      } else {
+        console.warn('Backend health check failed:', response.status);
+        return false;
+      }
     } catch (error) {
-      console.warn('Backend servisi erişilebilir değil:', error);
+      if (error.name === 'AbortError') {
+        console.warn('Backend health check timeout');
+      } else {
+        console.warn('Backend servisi erişilebilir değil:', error.message);
+      }
       return false;
     }
   }
@@ -200,6 +218,13 @@ class PDFService {
   async generatePDFWithFallback(formData, docType, language = 'en') {
     try {
       console.log('Starting PDF generation with backend API');
+      
+      // Backend durumunu kontrol et
+      const isConnected = await this.testConnection();
+      if (!isConnected) {
+        throw new Error('Backend servisi şu anda erişilebilir değil.');
+      }
+      
       const jobId = await this.startPDFGeneration(docType, formData, language);
       await this.waitForPDFCompletion(jobId);
       const fileName = this.generateFileName(docType, formData);
@@ -208,12 +233,16 @@ class PDFService {
       console.error('PDF generation failed:', error);
       
       // Backend bağlantı hatalarını kullanıcı dostu mesajlara çevir
-      if (error.message.includes('500') || error.message.includes('502') || error.message.includes('Load failed')) {
+      if (error.message.includes('template.generate is not a function')) {
+        throw new Error('PDF şablonu hatası tespit edildi. Backend geliştirici ekibi bilgilendirildi. Lütfen daha sonra tekrar deneyin.');
+      } else if (error.message.includes('500') || error.message.includes('502') || error.message.includes('Load failed')) {
         throw new Error('Backend servisi şu anda bakımda. Lütfen birkaç dakika sonra tekrar deneyin.');
       } else if (error.message.includes('404')) {
         throw new Error('PDF oluşturma servisi bulunamadı. Lütfen sistem yöneticisi ile iletişime geçin.');
       } else if (error.message.includes('timeout')) {
         throw new Error('PDF oluşturma işlemi zaman aşımına uğradı. Lütfen tekrar deneyin.');
+      } else if (error.message.includes('Backend servisi şu anda erişilebilir değil')) {
+        throw new Error('Backend servisi şu anda bakımda. Lütfen daha sonra tekrar deneyin.');
       } else {
         throw new Error(`PDF oluşturulamadı: ${error.message}`);
       }

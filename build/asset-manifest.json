@@ -1,0 +1,35 @@
+{
+  "files": {
+    "main.css": "/static/css/main.54e4e16d.css",
+    "main.js": "/static/js/main.edd83305.js",
+    "static/js/453.670e15c7.chunk.js": "/static/js/453.670e15c7.chunk.js",
+    "static/media/machine-wash.jpeg": "/static/media/machine-wash.300579b4664e1a6ff32e.jpeg",
+    "static/media/do-not-dry-clean.jpeg": "/static/media/do-not-dry-clean.2892b246515d85e453f3.jpeg",
+    "static/media/hand-wash.jpeg": "/static/media/hand-wash.71c4f6ca3b97e35e789a.jpeg",
+    "static/media/P.jpeg": "/static/media/P.dd6e373c95b9c58fcf80.jpeg",
+    "static/media/60-derece.jpeg": "/static/media/60-derece.c9c83e2d75bfb8933a44.jpeg",
+    "static/media/30-derece.jpeg": "/static/media/30-derece.84881cf354fab8fc84c4.jpeg",
+    "static/media/50-derece.jpeg": "/static/media/50-derece.9a381ae42fe0335d9580.jpeg",
+    "static/media/do-not-bleach.jpeg": "/static/media/do-not-bleach.1f7623ef8f1ac17d3752.jpeg",
+    "static/media/40-derece.jpeg": "/static/media/40-derece.19ea8d43e52e91a2a728.jpeg",
+    "static/media/do-not-tumble.jpeg": "/static/media/do-not-tumble.e986372ef762b440a984.jpeg",
+    "static/media/do-not-wash.jpeg": "/static/media/do-not-wash.e33f4a81905d0cecea92.jpeg",
+    "static/media/cleaning-PCE-delicate.jpeg": "/static/media/cleaning-PCE-delicate.ce0806fa26b1cd523f0b.jpeg",
+    "static/media/cleaning-PCE-very-delicate.jpeg": "/static/media/cleaning-PCE-very-delicate.24c98ca73c9c2d3ba876.jpeg",
+    "static/media/buhar.jpeg": "/static/media/buhar.733de5a96f196ea1abc3.jpeg",
+    "static/media/do-not-iron.jpeg": "/static/media/do-not-iron.e58c179e4ab6187435c8.jpeg",
+    "static/media/high-heat.jpeg": "/static/media/high-heat.ba1cb1e481bf6c6fe39c.jpeg",
+    "static/media/medium-heat.jpeg": "/static/media/medium-heat.e9202f587ff9458022e2.jpeg",
+    "static/media/low-heat.jpeg": "/static/media/low-heat.395ef75467ccfc20c312.jpeg",
+    "static/media/low-iron.jpeg": "/static/media/low-iron.da64ac2d8599b6567e81.jpeg",
+    "static/media/any-solvent.jpeg": "/static/media/any-solvent.85ae04abb7acfd046bbc.jpeg",
+    "index.html": "/index.html",
+    "main.54e4e16d.css.map": "/static/css/main.54e4e16d.css.map",
+    "main.edd83305.js.map": "/static/js/main.edd83305.js.map",
+    "453.670e15c7.chunk.js.map": "/static/js/453.670e15c7.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.54e4e16d.css",
+    "static/js/main.edd83305.js"
+  ]
+}

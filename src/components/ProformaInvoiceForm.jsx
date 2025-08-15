@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import usePDFGeneration from '../hooks/usePDFGeneration';
+import SystemStatus from './SystemStatus';
 import '../css/ProformaInvoiceForm.css';
 
 const ProformaInvoiceForm = ({ selectedLanguage }) => {
@@ -216,6 +217,9 @@ IBAN :TR29 0003 2000 0320 0000 9679 79`
         <h2>PROFORMA INVOICE</h2>
         <p>Proforma fatura bilgilerini doldurun</p>
       </div>
+
+      {/* Sistem Durumu */}
+      <SystemStatus />
 
       {/* Error & Success Messages */}
       {(error || pdfError) && (
