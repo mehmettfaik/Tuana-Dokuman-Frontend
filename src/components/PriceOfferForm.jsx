@@ -1,0 +1,410 @@
+import React, { useState } from 'react';
+import { generatePDF } from '../api';
+import '../css/PriceOfferForm.css';
+
+const PriceOfferForm = ({ selectedLanguage }) => {
+  const [formData, setFormData] = useState({
+    // Price Offer specific fields
+    'ISSUE DATE': '',
+    'PRICE OFFER NUMBER': '',
+    
+    // From/To Information (similar to Responsible Person and Recipient)
+    'FROM': '',
+    'TO': '',
+    
+    // Payment & Transport (from InvoiceForm)
+    'PAYMENT TERMS': '',
+    'TRANSPORT TYPE': '',
+  });
+
+  // Price Offer Items - özel alanlarla
+  const [priceItems, setPriceItems] = useState([
+    {
+      id: 1,
+      'ARTICLE NUMBER': '',
+      'PRICE (PER METER)': '',
+      'BULK MOQ (METERS)': '',
+      'SAMPLING AVAILABILITY (1-100 METERS)': '',
+      'LEAD TIME': '',
+      'PROCESS': '',
+      'CERTIFIABLE': ''
+    }
+  ]);
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  const handleInputChange = (name, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Ürün verilerini güncelleme
+  const handlePriceItemChange = (id, field, value) => {
+    setPriceItems(prev => prev.map(item => {
+      if (item.id === id) {
+        return { ...item, [field]: value };
+      }
+      return item;
+    }));
+  };
+
+  // Yeni ürün ekleme
+  const addPriceItem = () => {
+    const newId = Math.max(...priceItems.map(item => item.id)) + 1;
+    setPriceItems(prev => [...prev, {
+      id: newId,
+      'ARTICLE NUMBER': '',
+      'PRICE (PER METER)': '',
+      'BULK MOQ (METERS)': '',
+      'SAMPLING AVAILABILITY (1-100 METERS)': '',
+      'LEAD TIME': '',
+      'PROCESS': '',
+      'CERTIFIABLE': ''
+    }]);
+  };
+
+  // Ürün silme
+  const removePriceItem = (id) => {
+    if (priceItems.length > 1) {
+      setPriceItems(prev => prev.filter(item => item.id !== id));
+    }
+  };
+
+  // Form gönderme
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const requestData = {
+        formData: formData,
+        priceItems: priceItems
+      };
+
+      console.log('Gönderilen price offer data:', requestData);
+      
+      const response = await generatePDF(requestData, 'price-offer', selectedLanguage);
+      console.log('PDF yanıtı alındı:', response);
+
+      if (response) {
+        const blob = new Blob([response], { type: 'application/pdf' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        
+        // Dosya adını PRICE OFFER NUMBER ile oluştur
+        const priceOfferNumber = formData['PRICE OFFER NUMBER'] || 'No-Price-Offer-Number';
+        const safePriceOfferNumber = priceOfferNumber.replace(/[^a-zA-Z0-9-_\s]/g, '').replace(/\s+/g, '-');
+        link.download = `${safePriceOfferNumber}_Price-Offer.pdf`;
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        
+        setSuccess('Price Offer PDF başarıyla oluşturuldu ve indirildi!');
+      } else {
+        throw new Error('PDF verisi alınamadı');
+      }
+    } catch (err) {
+      console.error('Form submission error:', err);
+      setError('Price Offer gönderilirken bir hata oluştu: ' + (err.message || err.toString()));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Form sıfırlama
+  const handleReset = () => {
+    setFormData({
+      'ISSUE DATE': '',
+      'PRICE OFFER NUMBER': '',
+      'FROM': '',
+      'TO': '',
+      'PAYMENT TERMS': '',
+      'TRANSPORT TYPE': '',
+    });
+    
+    setPriceItems([{
+      id: 1,
+      'ARTICLE NUMBER': '',
+      'PRICE (PER METER)': '',
+      'BULK MOQ (METERS)': '',
+      'SAMPLING AVAILABILITY (1-100 METERS)': '',
+      'LEAD TIME': '',
+      'PROCESS': '',
+      'CERTIFIABLE': ''
+    }]);
+    
+    setError('');
+    setSuccess('');
+  };
+
+  return (
+    <div className="price-offer-form-container">
+      <div className="price-offer-form-header">
+        <h2>PRICE OFFER</h2>
+        <p>Fiyat teklifi bilgilerini doldurun ve PDF olarak oluşturun</p>
+      </div>
+
+      {error && (
+        <div className="alert alert-error">
+          {error}
+        </div>
+      )}
+
+      {success && (
+        <div className="alert alert-success">
+          {success}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="price-offer-form">
+        {/* Price Offer Information */}
+        <div className="form-section">
+          <h3 className="section-title">Price Offer Information</h3>
+          <div className="form-grid">
+            <div className="form-group">
+              <label className="form-label">ISSUE DATE</label>
+              <input
+                type="date"
+                className="form-input"
+                value={formData['ISSUE DATE']}
+                onChange={(e) => handleInputChange('ISSUE DATE', e.target.value)}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">PRICE OFFER NUMBER</label>
+              <input
+                type="text"
+                className="form-input"
+                value={formData['PRICE OFFER NUMBER']}
+                onChange={(e) => handleInputChange('PRICE OFFER NUMBER', e.target.value)}
+                placeholder="Fiyat teklif numarasını girin"
+                required
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* From/To Information */}
+        <div className="form-section">
+          <h3 className="section-title">Company Information</h3>
+          <div className="form-grid">
+            <div className="form-group">
+              <label className="form-label">FROM</label>
+              <textarea
+                className="form-textarea"
+                value={formData['FROM']}
+                onChange={(e) => handleInputChange('FROM', e.target.value)}
+                placeholder="Gönderen şirket bilgilerini girin"
+                rows="4"
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">TO</label>
+              <textarea
+                className="form-textarea"
+                value={formData['TO']}
+                onChange={(e) => handleInputChange('TO', e.target.value)}
+                placeholder="Alıcı şirket bilgilerini girin"
+                rows="4"
+                required
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Payment & Transport Details */}
+        <div className="form-section">
+          <h3 className="section-title">Payment & Transport Details</h3>
+          <div className="form-grid">
+            <div className="form-group">
+              <label className="form-label">PAYMENT TERMS</label>
+              <select
+                className="form-input"
+                value={formData['PAYMENT TERMS']}
+                onChange={(e) => handleInputChange('PAYMENT TERMS', e.target.value)}
+              >
+                <option value="">Ödeme vadesi seçin</option>
+                <option value="30 Days">30 Days</option>
+                <option value="60 Days">60 Days</option>
+                <option value="90 Days">90 Days</option>
+                <option value="120 Days">120 Days</option>
+                <option value="150 Days">150 Days</option>
+                <option value="180 Days">180 Days</option>
+                <option value="Immediately">Immediately</option>
+                <option value="Cash in Advance">Cash in Advance</option>
+              </select>
+            </div>
+            
+            <div className="form-group">
+              <label className="form-label">TRANSPORT TYPE</label>
+              <select
+                className="form-input"
+                value={formData['TRANSPORT TYPE']}
+                onChange={(e) => handleInputChange('TRANSPORT TYPE', e.target.value)}
+              >
+                <option value="">Taşıma türü seçin</option>
+                <option value="CIF">CIF</option>
+                <option value="FOB">FOB</option>
+                <option value="EXW">EXW</option>
+                <option value="DAP">DAP</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Price Items */}
+        <div className="form-section">
+          <div className="items-header">
+            <h3 className="section-title">PRICE ITEMS</h3>
+            <button
+              type="button"
+              className="btn btn-add-item"
+              onClick={addPriceItem}
+            >
+              + Yeni Ürün Ekle
+            </button>
+          </div>
+          
+          {priceItems.map((item, index) => (
+            <div key={item.id} className="price-item">
+              <div className="price-item-header">
+                <h4 className="price-item-title">Ürün #{index + 1}</h4>
+                {priceItems.length > 1 && (
+                  <button
+                    type="button"
+                    className="btn btn-remove-item"
+                    onClick={() => removePriceItem(item.id)}
+                  >
+                    × Sil
+                  </button>
+                )}
+              </div>
+              
+              <div className="price-item-container">
+                <div className="price-grid-row">
+                  <div className="form-group">
+                    <label className="form-label">ARTICLE NUMBER</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={item['ARTICLE NUMBER']}
+                      onChange={(e) => handlePriceItemChange(item.id, 'ARTICLE NUMBER', e.target.value)}
+                      placeholder="Artikel numarası"
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label className="form-label">PRICE (PER METER)</label>
+                    <input
+                      type="text"
+                      className="form-input price-input"
+                      value={item['PRICE (PER METER)']}
+                      onChange={(e) => handlePriceItemChange(item.id, 'PRICE (PER METER)', e.target.value)}
+                      placeholder="Metre başına fiyat (USD/EUR/TRY)"
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label className="form-label">BULK MOQ (METERS)</label>
+                    <input
+                      type="number"
+                      className="form-input"
+                      value={item['BULK MOQ (METERS)']}
+                      onChange={(e) => handlePriceItemChange(item.id, 'BULK MOQ (METERS)', e.target.value)}
+                      placeholder="Minimum sipariş miktarı (metre)"
+                      step="0.01"
+                    />
+                  </div>
+                </div>
+                
+                <div className="price-grid-row">
+                  <div className="form-group">
+                    <label className="form-label">SAMPLING AVAILABILITY (1-100 METERS)</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={item['SAMPLING AVAILABILITY (1-100 METERS)']}
+                      onChange={(e) => handlePriceItemChange(item.id, 'SAMPLING AVAILABILITY (1-100 METERS)', e.target.value)}
+                      placeholder="Numune mevcut durumu"
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label className="form-label">LEAD TIME</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={item['LEAD TIME']}
+                      onChange={(e) => handlePriceItemChange(item.id, 'LEAD TIME', e.target.value)}
+                      placeholder="Teslimat süresi"
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label className="form-label">PROCESS</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={item['PROCESS']}
+                      onChange={(e) => handlePriceItemChange(item.id, 'PROCESS', e.target.value)}
+                      placeholder="İşlem"
+                    />
+                  </div>
+                </div>
+                
+                <div className="price-grid-row">
+                  <div className="form-group">
+                    <label className="form-label">CERTIFIABLE</label>
+                    <select
+                      className="form-input"
+                      value={item['CERTIFIABLE']}
+                      onChange={(e) => handlePriceItemChange(item.id, 'CERTIFIABLE', e.target.value)}
+                    >
+                      <option value="">Sertifika durumu seçin</option>
+                      <option value="Yes">Yes</option>
+                      <option value="No">No</option>
+                      <option value="Upon Request">Upon Request</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="form-actions">
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={handleReset}
+            disabled={loading}
+          >
+            Temizle
+          </button>
+          
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={loading}
+          >
+            {loading ? <span className="spinner"></span> : null}
+            {loading ? 'PDF Oluşturuluyor...' : 'PDF Oluştur ve İndir'}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+};
+
+export default PriceOfferForm;
