@@ -48,7 +48,7 @@ export const generatePDF = async (formData, formType = 'fabric-technical', langu
           'Content-Type': 'application/json',
           'Accept': 'application/pdf'
         },
-        timeout: 10000 // 10 saniye timeout
+        timeout: 120000 // 120 saniye timeout
       }
     );
     
