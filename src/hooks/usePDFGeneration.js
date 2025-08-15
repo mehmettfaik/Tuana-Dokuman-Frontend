@@ -13,23 +13,19 @@ export const usePDFGeneration = () => {
       setError('');
       setProgress('PDF üretimi başlatılıyor...');
 
-      // Fallback destekli PDF üretimi
+      // Production PDF üretimi
       const success = await PDFService.generatePDFWithFallback(formData, docType, language);
       
       if (success) {
-        setProgress('PDF başarıyla indirildi! (Demo modunda çalıştırılıyor)');
-        setTimeout(() => setProgress(''), 5000);
+        setProgress('PDF başarıyla indirildi!');
+        setTimeout(() => setProgress(''), 3000);
         return true;
       } else {
         throw new Error('PDF üretimi başarısız oldu');
       }
 
     } catch (error) {
-      const errorMessage = error.message.includes('Tüm sistemler devre dışı') 
-        ? 'PDF servisleri şu anda kullanılamıyor. Lütfen daha sonra tekrar deneyin.'
-        : `Hata: ${error.message}`;
-      
-      setError(errorMessage);
+      setError(error.message);
       console.error('PDF generation error:', error);
       return false;
     } finally {
