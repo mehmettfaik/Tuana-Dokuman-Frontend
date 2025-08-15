@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { generatePDF } from '../api';
+import usePDFGeneration from '../hooks/usePDFGeneration';
 import '../css/PriceOfferForm.css';
 
 const PriceOfferForm = ({ selectedLanguage }) => {
@@ -31,9 +31,11 @@ const PriceOfferForm = ({ selectedLanguage }) => {
     }
   ]);
 
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  // Yeni PDF generation hook'u
+  const { isGenerating, error: pdfError, generatePDF: generatePDFWithHook } = usePDFGeneration();
 
   const handleInputChange = (name, value) => {
     setFormData(prev => ({
@@ -77,7 +79,6 @@ const PriceOfferForm = ({ selectedLanguage }) => {
   // Form gönderme
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
     setSuccess('');
 
@@ -89,34 +90,15 @@ const PriceOfferForm = ({ selectedLanguage }) => {
 
       console.log('Gönderilen price offer data:', requestData);
       
-      const response = await generatePDF(requestData, 'price-offer', selectedLanguage);
-      console.log('PDF yanıtı alındı:', response);
-
-      if (response) {
-        const blob = new Blob([response], { type: 'application/pdf' });
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        
-        // Dosya adını PRICE OFFER NUMBER ile oluştur
-        const priceOfferNumber = formData['PRICE OFFER NUMBER'] || 'No-Price-Offer-Number';
-        const safePriceOfferNumber = priceOfferNumber.replace(/[^a-zA-Z0-9-_\s]/g, '').replace(/\s+/g, '-');
-        link.download = `${safePriceOfferNumber}_Price-Offer.pdf`;
-        
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-        
+      // Yeni 3-aşamalı PDF generation kullan
+      const success = await generatePDFWithHook(requestData, 'price-offer', selectedLanguage);
+      
+      if (success) {
         setSuccess('Price Offer PDF başarıyla oluşturuldu ve indirildi!');
-      } else {
-        throw new Error('PDF verisi alınamadı');
       }
     } catch (err) {
       console.error('Form submission error:', err);
       setError('Price Offer gönderilirken bir hata oluştu: ' + (err.message || err.toString()));
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -156,6 +138,12 @@ const PriceOfferForm = ({ selectedLanguage }) => {
       {error && (
         <div className="alert alert-error">
           {error}
+        </div>
+      )}
+
+      {pdfError && (
+        <div className="alert alert-error">
+          {pdfError}
         </div>
       )}
 
@@ -388,7 +376,7 @@ const PriceOfferForm = ({ selectedLanguage }) => {
             type="button"
             className="btn btn-secondary"
             onClick={handleReset}
-            disabled={loading}
+            disabled={isGenerating}
           >
             Temizle
           </button>
@@ -396,10 +384,10 @@ const PriceOfferForm = ({ selectedLanguage }) => {
           <button
             type="submit"
             className="btn btn-primary"
-            disabled={loading}
+            disabled={isGenerating}
           >
-            {loading ? <span className="spinner"></span> : null}
-            {loading ? 'PDF Oluşturuluyor...' : 'PDF Oluştur ve İndir'}
+            {isGenerating ? <span className="spinner"></span> : null}
+            {isGenerating ? 'PDF Oluşturuluyor...' : 'PDF Oluştur ve İndir'}
           </button>
         </div>
       </form>

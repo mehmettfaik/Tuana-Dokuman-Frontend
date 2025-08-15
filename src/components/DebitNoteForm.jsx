@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { generatePDF } from '../api';
+import usePDFGeneration from '../hooks/usePDFGeneration';
 import '../css/DebitNoteForm.css';
 
 const DebitNoteForm = ({ selectedLanguage }) => {
@@ -56,9 +56,11 @@ const DebitNoteForm = ({ selectedLanguage }) => {
     }
   ]);
 
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  // Yeni PDF generation hook'u
+  const { isGenerating, progress, error: pdfError, generatePDF: generatePDFWithHook } = usePDFGeneration();
 
   const handleInputChange = (name, value) => {
     setFormData(prev => ({
@@ -116,7 +118,6 @@ const DebitNoteForm = ({ selectedLanguage }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
     setSuccess('');
 
@@ -130,37 +131,15 @@ const DebitNoteForm = ({ selectedLanguage }) => {
 
       console.log('Gönderilen debit note data:', combinedData);
 
-      const response = await generatePDF(combinedData, 'debit-note', selectedLanguage);
-      console.log('PDF yanıtı alındı:', response);
-
-      if (response) {
-        const blob = new Blob([response], { type: 'application/pdf' });
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-
-        // Dosya adını DEBIT NOTE NUMBER ve RECIPIENT Şirket Adı ile oluştur
-        const debitNoteNumber = formData['DEBIT NOTE NUMBER'] || 'No-Debit-Note-Number';
-        const recipientCompany = formData['RECIPIENT Şirket Adı'] || 'Unknown-Company';
-        // Dosya adı için güvenli karakterler kullan
-        const safeDebitNoteNumber = debitNoteNumber.replace(/[^a-zA-Z0-9-_\s]/g, '').replace(/\s+/g, '-');
-        const safeCompanyName = recipientCompany.replace(/[^a-zA-Z0-9-_\s]/g, '').replace(/\s+/g, '-');
-        link.download = `${safeDebitNoteNumber}_${safeCompanyName}_Debit-Note.pdf`;
-        
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-
+      // Yeni 3-aşamalı PDF generation kullan
+      const success = await generatePDFWithHook(combinedData, 'debit-note', selectedLanguage);
+      
+      if (success) {
         setSuccess('Debit Note PDF başarıyla oluşturuldu ve indirildi!');
-      } else {
-        throw new Error('PDF verisi alınamadı');
       }
     } catch (error) {
       console.error('PDF oluşturma hatası:', error);
       setError('PDF oluşturulurken hata oluştu: ' + (error.message || error.toString()));
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -215,8 +194,20 @@ const DebitNoteForm = ({ selectedLanguage }) => {
         <p>İade faturası bilgilerini doldurun</p>
       </div>
 
-      {error && <div className="alert alert-error">{error}</div>}
+      {/* Error & Success Messages */}
+      {(error || pdfError) && (
+        <div className="alert alert-error">
+          {error || pdfError}
+        </div>
+      )}
       {success && <div className="alert alert-success">{success}</div>}
+      
+      {/* Progress Message */}
+      {progress && (
+        <div className="progress-message">
+          {progress}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="debit-form">
         {/* Debit Note Information Section */}
@@ -672,7 +663,7 @@ const DebitNoteForm = ({ selectedLanguage }) => {
             type="button"
             className="btn btn-secondary"
             onClick={handleReset}
-            disabled={loading}
+            disabled={isGenerating}
           >
             Temizle
           </button>
@@ -680,12 +671,25 @@ const DebitNoteForm = ({ selectedLanguage }) => {
           <button
             type="submit"
             className="btn btn-primary"
-            disabled={loading}
+            disabled={isGenerating}
           >
-            {loading ? <span className="spinner"></span> : null}
-            {loading ? 'PDF Oluşturuluyor...' : 'PDF Oluştur ve İndir'}
+            {isGenerating ? (
+              <>
+                <span className="spinner"></span>
+                PDF Oluşturuluyor...
+              </>
+            ) : (
+              'PDF Oluştur ve İndir'
+            )}
           </button>
         </div>
+
+        {/* Loading Spinner */}
+        {isGenerating && (
+          <div className="loading-spinner">
+            <div className="spinner"></div>
+          </div>
+        )}
       </form>
     </div>
   );

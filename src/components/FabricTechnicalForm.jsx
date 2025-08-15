@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { generatePDF } from '../api';
+import usePDFGeneration from '../hooks/usePDFGeneration';
 import '../css/FabricTechnicalForm.css';
 
 const FabricTechnicalForm = ({ selectedLanguage }) => {
@@ -26,9 +26,11 @@ const FabricTechnicalForm = ({ selectedLanguage }) => {
     'CARE_INSTRUCTIONS': []
   });
 
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  // Yeni PDF generation hook'u
+  const { isGenerating, progress, error: pdfError, generatePDF: generatePDFWithHook } = usePDFGeneration();
 
   // Yıkama talimatları fotoğrafları listesi
   const careInstructionsList = [
@@ -100,7 +102,6 @@ const FabricTechnicalForm = ({ selectedLanguage }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
     setSuccess('');
 
@@ -112,31 +113,15 @@ const FabricTechnicalForm = ({ selectedLanguage }) => {
         NOTE_3: formData['NOTE_3']
       });
 
-      const pdfBlob = await generatePDF(formData, 'fabric-technical', selectedLanguage);
-
-      const url = window.URL.createObjectURL(new Blob([pdfBlob], { type: 'application/pdf' }));
-      const link = document.createElement('a');
-      link.href = url;
+      // Yeni 3-aşamalı PDF generation kullan
+      const success = await generatePDFWithHook(formData, 'fabric-technical', selectedLanguage);
       
-      // Dosya adını ARTICLE CODE ile oluştur
-      const articleCode = formData['ARTICLE CODE'] || 'Article';
-      // Dosya adı için güvenli karakterler kullan
-      const safeArticleCode = articleCode.replace(/[^a-zA-Z0-9-_\s]/g, '').replace(/\s+/g, '-');
-      link.download = `${safeArticleCode}_TUANA_FABRIC_TECHNICAL_SHEET.pdf`;
-      
-      link.style.display = 'none';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-
-      setSuccess('PDF başarıyla oluşturuldu ve indirildi!');
-
+      if (success) {
+        setSuccess('Technical Sheet PDF başarıyla oluşturuldu ve indirildi!');
+      }
     } catch (error) {
       console.error('PDF oluşturma hatası:', error);
       setError(`PDF oluşturulamadı: ${error.message}`);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -174,15 +159,23 @@ const FabricTechnicalForm = ({ selectedLanguage }) => {
         <p>Kumaş teknik bilgi formunu doldurun</p>
       </div>
 
-      {error && (
+      {/* Error & Success Messages */}
+      {(error || pdfError) && (
         <div className="alert alert-error">
-          <strong>Hata:</strong> {error}
+          <strong>Hata:</strong> {error || pdfError}
         </div>
       )}
 
       {success && (
         <div className="alert alert-success">
           <strong>Başarılı:</strong> {success}
+        </div>
+      )}
+      
+      {/* Progress Message */}
+      {progress && (
+        <div className="progress-message">
+          {progress}
         </div>
       )}
 
@@ -211,7 +204,7 @@ const FabricTechnicalForm = ({ selectedLanguage }) => {
                       value={formData[fieldName]}
                       onChange={handleInputChange}
                       className="form-input"
-                      disabled={loading}
+                      disabled={isGenerating}
                     >
                       <option value="">Seçiniz...</option>
                       <option value="POPELINE">POPELINE</option>
@@ -243,7 +236,7 @@ const FabricTechnicalForm = ({ selectedLanguage }) => {
                       value={formData[fieldName]}
                       onChange={handleInputChange}
                       className="form-input"
-                      disabled={loading}
+                      disabled={isGenerating}
                     >
                       <option value="">Seçiniz...</option>
                       <option value="PFD">PFD</option>
@@ -267,7 +260,7 @@ const FabricTechnicalForm = ({ selectedLanguage }) => {
                       value={formData[fieldName]}
                       onChange={handleInputChange}
                       className="form-input"
-                      disabled={loading}
+                      disabled={isGenerating}
                     >
                       <option value="">Seçiniz...</option>
                       <option value="GOTS">GOTS</option>
@@ -287,7 +280,7 @@ const FabricTechnicalForm = ({ selectedLanguage }) => {
                       onChange={handleInputChange}
                       className="form-input"
                       placeholder={`${fieldName} giriniz...`}
-                      disabled={loading}
+                      disabled={isGenerating}
                     />
                   )}
                 </div>
@@ -311,7 +304,7 @@ const FabricTechnicalForm = ({ selectedLanguage }) => {
                   onChange={handleInputChange}
                   className="form-textarea"
                   placeholder={`${index + 1}. notu giriniz... (opsiyonel)`}
-                  disabled={loading}
+                  disabled={isGenerating}
                   rows="3"
                 />
               </div>
@@ -331,7 +324,7 @@ const FabricTechnicalForm = ({ selectedLanguage }) => {
                     checked={formData['CARE_INSTRUCTIONS'].includes(instruction.id)}
                     onChange={() => handleCareInstructionToggle(instruction.id)}
                     className="care-instruction-checkbox"
-                    disabled={loading}
+                    disabled={isGenerating}
                   />
                   <div className="care-instruction-content">
                     <div className="care-instruction-icon">
@@ -385,7 +378,7 @@ const FabricTechnicalForm = ({ selectedLanguage }) => {
                 onChange={handleInputChange}
                 className="form-input"
                 placeholder="İmzalayan kişi giriniz..."
-                disabled={loading}
+                disabled={isGenerating}
               />
             </div>
 
@@ -401,7 +394,7 @@ const FabricTechnicalForm = ({ selectedLanguage }) => {
                 onChange={handleInputChange}
                 className="form-input"
                 placeholder="Sorumlu teknisyen giriniz..."
-                disabled={loading}
+                disabled={isGenerating}
               />
             </div>
           </div>
@@ -412,7 +405,7 @@ const FabricTechnicalForm = ({ selectedLanguage }) => {
             type="button"
             onClick={handleReset}
             className="btn btn-secondary"
-            disabled={loading}
+            disabled={isGenerating}
           >
             Temizle
           </button>
@@ -420,12 +413,25 @@ const FabricTechnicalForm = ({ selectedLanguage }) => {
           <button
             type="submit"
             className="btn btn-primary"
-            disabled={loading}
+            disabled={isGenerating}
           >
-            {loading ? <span className="spinner"></span> : null}
-            {loading ? 'PDF Oluşturuluyor...' : 'PDF Oluştur ve İndir'}
+            {isGenerating ? (
+              <>
+                <span className="spinner"></span>
+                PDF Oluşturuluyor...
+              </>
+            ) : (
+              'PDF Oluştur ve İndir'
+            )}
           </button>
         </div>
+
+        {/* Loading Spinner */}
+        {isGenerating && (
+          <div className="loading-spinner">
+            <div className="spinner"></div>
+          </div>
+        )}
       </form>
     </div>
   );

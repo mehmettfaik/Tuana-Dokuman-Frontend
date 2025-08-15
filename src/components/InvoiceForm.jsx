@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { generatePDF } from '../api';
+import usePDFGeneration from '../hooks/usePDFGeneration';
 import '../css/ProformaInvoiceForm.css';
 
 const InvoiceForm = ({ selectedLanguage }) => {
@@ -60,9 +60,11 @@ const InvoiceForm = ({ selectedLanguage }) => {
     }
   ]);
 
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  // Yeni PDF generation hook'u
+  const { isGenerating, progress, error: pdfError, generatePDF: generatePDFWithHook } = usePDFGeneration();
 
   const handleInputChange = (name, value) => {
     setFormData(prev => ({
@@ -140,7 +142,6 @@ IBAN :TR29 0003 2000 0320 0000 9679 79`
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
     setSuccess('');
 
@@ -153,37 +154,15 @@ IBAN :TR29 0003 2000 0320 0000 9679 79`
       
       console.log('Gönderilen invoice data:', combinedData);
       
-      const response = await generatePDF(combinedData, 'invoice', selectedLanguage);
-      console.log('PDF yanıtı alındı:', response);
-
-      if (response) {
-        const blob = new Blob([response], { type: 'application/pdf' });
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        
-        // Dosya adını INVOICE NUMBER ve RECIPIENT Şirket Adı ile oluştur
-        const invoiceNumber = formData['INVOICE NUMBER'] || 'Invoice';
-        const recipientCompany = formData['RECIPIENT Şirket Adı'] || 'Company';
-        // Dosya adı için güvenli karakterler kullan
-        const safeInvoiceNumber = invoiceNumber.replace(/[^a-zA-Z0-9-_\s]/g, '').replace(/\s+/g, '-');
-        const safeCompanyName = recipientCompany.replace(/[^a-zA-Z0-9-_\s]/g, '').replace(/\s+/g, '-');
-        link.download = `${safeInvoiceNumber}_${safeCompanyName}_Invoice.pdf`;
-        
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-        
+      // Yeni 3-aşamalı PDF generation kullan
+      const success = await generatePDFWithHook(combinedData, 'invoice', selectedLanguage);
+      
+      if (success) {
         setSuccess('Invoice PDF başarıyla oluşturuldu ve indirildi!');
-      } else {
-        throw new Error('PDF verisi alınamadı');
       }
     } catch (error) {
       console.error('PDF oluşturma hatası:', error);
       setError('PDF oluşturulurken hata oluştu: ' + (error.message || error.toString()));
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -242,8 +221,28 @@ IBAN :TR29 0003 2000 0320 0000 9679 79`
         <p>Fatura bilgilerini doldurun</p>
       </div>
 
-      {error && <div className="alert alert-error">{error}</div>}
+      {/* Error & Success Messages */}
+      {(error || pdfError) && (
+        <div className="alert alert-error">
+          {error || pdfError}
+        </div>
+      )}
       {success && <div className="alert alert-success">{success}</div>}
+      
+      {/* Progress Message */}
+      {progress && (
+        <div className="progress-message" style={{ 
+          background: '#e3f2fd', 
+          border: '1px solid #2196f3', 
+          color: '#1976d2', 
+          padding: '12px', 
+          borderRadius: '4px', 
+          marginBottom: '1rem',
+          textAlign: 'center'
+        }}>
+          {progress}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="proforma-form">
         {/* Invoice Number Section */}
@@ -763,7 +762,7 @@ IBAN :TR29 0003 2000 0320 0000 9679 79`
             type="button"
             className="btn btn-secondary"
             onClick={handleReset}
-            disabled={loading}
+            disabled={isGenerating}
           >
             Temizle
           </button>
@@ -771,12 +770,37 @@ IBAN :TR29 0003 2000 0320 0000 9679 79`
           <button
             type="submit"
             className="btn btn-primary"
-            disabled={loading}
+            disabled={isGenerating}
           >
-            {loading ? <span className="spinner"></span> : null}
-            {loading ? 'PDF Oluşturuluyor...' : 'PDF Oluştur ve İndir'}
+            {isGenerating ? (
+              <>
+                <span className="spinner"></span>
+                PDF Oluşturuluyor...
+              </>
+            ) : (
+              'PDF Oluştur ve İndir'
+            )}
           </button>
         </div>
+
+        {/* Loading Spinner */}
+        {isGenerating && (
+          <div className="loading-spinner" style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginTop: '1rem'
+          }}>
+            <div className="spinner" style={{
+              border: '4px solid #f3f3f3',
+              borderTop: '4px solid #3498db',
+              borderRadius: '50%',
+              width: '40px',
+              height: '40px',
+              animation: 'spin 2s linear infinite'
+            }}></div>
+          </div>
+        )}
       </form>
     </div>
   );

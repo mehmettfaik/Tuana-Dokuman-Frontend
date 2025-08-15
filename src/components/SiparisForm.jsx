@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { generatePDF } from '../api';
+import usePDFGeneration from '../hooks/usePDFGeneration';
 import '../css/SiparisForm.css';
 
 const SiparisForm = ({ selectedLanguage }) => {
@@ -56,9 +56,11 @@ const SiparisForm = ({ selectedLanguage }) => {
     }
   ]);
 
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  // Yeni PDF generation hook'u
+  const { isGenerating, error: pdfError, generatePDF: generatePDFWithHook } = usePDFGeneration();
 
   const handleInputChange = (name, value) => {
     setFormData(prev => ({
@@ -120,7 +122,6 @@ const SiparisForm = ({ selectedLanguage }) => {
   // Form gönderme
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
     setSuccess('');
 
@@ -136,34 +137,15 @@ const SiparisForm = ({ selectedLanguage }) => {
 
       console.log('Gönderilen sipariş data:', requestData);
       
-      const response = await generatePDF(requestData, 'siparis', selectedLanguage);
-      console.log('PDF yanıtı alındı:', response);
-
-      if (response) {
-        const blob = new Blob([response], { type: 'application/pdf' });
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        
-        // Dosya adını ORDER NUMBER ile oluştur
-        const orderNumber = formData['ORDER NUMBER'] || 'No-Order-Number';
-        const safeOrderNumber = orderNumber.replace(/[^a-zA-Z0-9-_\s]/g, '').replace(/\s+/g, '-');
-        link.download = `${safeOrderNumber}_Siparis-Formu.pdf`;
-        
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-        
+      // Yeni 3-aşamalı PDF generation kullan
+      const success = await generatePDFWithHook(requestData, 'siparis', selectedLanguage);
+      
+      if (success) {
         setSuccess('Sipariş formu PDF başarıyla oluşturuldu ve indirildi!');
-      } else {
-        throw new Error('PDF verisi alınamadı');
       }
     } catch (err) {
       console.error('Form submission error:', err);
       setError('Sipariş formu gönderilirken bir hata oluştu: ' + (err.message || err.toString()));
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -222,6 +204,12 @@ const SiparisForm = ({ selectedLanguage }) => {
       {error && (
         <div className="alert alert-error">
           {error}
+        </div>
+      )}
+
+      {pdfError && (
+        <div className="alert alert-error">
+          {pdfError}
         </div>
       )}
 
@@ -655,7 +643,7 @@ const SiparisForm = ({ selectedLanguage }) => {
             type="button"
             className="btn btn-secondary"
             onClick={handleReset}
-            disabled={loading}
+            disabled={isGenerating}
           >
             Temizle
           </button>
@@ -663,10 +651,10 @@ const SiparisForm = ({ selectedLanguage }) => {
           <button
             type="submit"
             className="btn btn-primary"
-            disabled={loading}
+            disabled={isGenerating}
           >
-            {loading ? <span className="spinner"></span> : null}
-            {loading ? 'PDF Oluşturuluyor...' : 'PDF Oluştur ve İndir'}
+            {isGenerating ? <span className="spinner"></span> : null}
+            {isGenerating ? 'PDF Oluşturuluyor...' : 'PDF Oluştur ve İndir'}
           </button>
         </div>
       </form>

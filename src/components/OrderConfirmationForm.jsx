@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { generatePDF } from '../api';
+import usePDFGeneration from '../hooks/usePDFGeneration';
 import '../css/OrderConfirmationForm.css';
 
 const OrderConfirmationForm = ({ selectedLanguage }) => {
@@ -54,9 +54,11 @@ const OrderConfirmationForm = ({ selectedLanguage }) => {
     }
   ]);
 
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  // Yeni PDF generation hook'u
+  const { isGenerating, error: pdfError, generatePDF: generatePDFWithHook } = usePDFGeneration();
 
   const handleInputChange = (name, value) => {
     setFormData(prev => ({
@@ -113,7 +115,6 @@ const OrderConfirmationForm = ({ selectedLanguage }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
     setSuccess('');
 
@@ -126,37 +127,15 @@ const OrderConfirmationForm = ({ selectedLanguage }) => {
       
       console.log('Gönderilen order confirmation data:', combinedData);
       
-      const response = await generatePDF(combinedData, 'order-confirmation', selectedLanguage);
-      console.log('PDF yanıtı alındı:', response);
-
-      if (response) {
-        const blob = new Blob([response], { type: 'application/pdf' });
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        
-        // Dosya adını ORDER CONFIRMATION NUMBER ve RECIPIENT Şirket Adı ile oluştur
-        const orderNumber = formData['ORDER CONFIRMATION NUMBER'] || 'OrderConfirmation';
-        const recipientCompany = formData['RECIPIENT Şirket Adı'] || 'Company';
-        // Dosya adı için güvenli karakterler kullan
-        const safeOrderNumber = orderNumber.replace(/[^a-zA-Z0-9-_\s]/g, '').replace(/\s+/g, '-');
-        const safeCompanyName = recipientCompany.replace(/[^a-zA-Z0-9-_\s]/g, '').replace(/\s+/g, '-');
-        link.download = `${safeOrderNumber}_${safeCompanyName}_OrderConfirmation.pdf`;
-        
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-        
+      // Yeni 3-aşamalı PDF generation kullan
+      const success = await generatePDFWithHook(combinedData, 'order-confirmation', selectedLanguage);
+      
+      if (success) {
         setSuccess('Order Confirmation PDF başarıyla oluşturuldu ve indirildi!');
-      } else {
-        throw new Error('PDF verisi alınamadı');
       }
     } catch (error) {
       console.error('PDF oluşturma hatası:', error);
       setError('PDF oluşturulurken hata oluştu: ' + (error.message || error.toString()));
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -210,6 +189,7 @@ const OrderConfirmationForm = ({ selectedLanguage }) => {
       </div>
 
       {error && <div className="alert alert-error">{error}</div>}
+      {pdfError && <div className="alert alert-error">{pdfError}</div>}
       {success && <div className="alert alert-success">{success}</div>}
 
       <form className="order-confirmation-form" onSubmit={handleSubmit}>
@@ -631,16 +611,16 @@ const OrderConfirmationForm = ({ selectedLanguage }) => {
             type="button"
             onClick={handleReset}
             className="btn btn-secondary"
-            disabled={loading}
+            disabled={isGenerating}
           >
             Temizle
           </button>
           <button
             type="submit"
             className="btn btn-primary"
-            disabled={loading}
+            disabled={isGenerating}
           >
-            {loading ? (
+            {isGenerating ? (
               <>
                 <span className="spinner"></span>
                 PDF Oluşturuluyor...
