@@ -58,6 +58,9 @@ const SiparisForm = ({ selectedLanguage }) => {
 
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  
+  // RECIPIENT bilgilerini DELIVERY ADDRESS'e kopyalama için state
+  const [copyRecipientToDelivery, setCopyRecipientToDelivery] = useState(false);
 
   // Yeni PDF generation hook'u
   const { isGenerating, error: pdfError, generatePDF: generatePDFWithHook } = usePDFGeneration();
@@ -67,6 +70,24 @@ const SiparisForm = ({ selectedLanguage }) => {
       ...prev,
       [name]: value
     }));
+  };
+
+  // RECIPIENT bilgilerini DELIVERY ADDRESS'e kopyalama fonksiyonu
+  const handleCopyToDelivery = (isChecked) => {
+    setCopyRecipientToDelivery(isChecked);
+    
+    if (isChecked) {
+      setFormData(prev => ({
+        ...prev,
+        'DELIVERY ADDRESS Şirket Adı': prev['RECIPIENT Şirket Adı'],
+        'DELIVERY ADDRESS Adres': prev['RECIPIENT Adres'],
+        'DELIVERY ADDRESS İlçe İl Ülke': prev['RECIPIENT İlçe İl Ülke'],
+        'DELIVERY ADDRESS Vat': prev['RECIPIENT Vat'],
+        'DELIVERY ADDRESS Sorumlu Kişi': prev['RECIPIENT Sorumlu Kişi'],
+        'DELIVERY ADDRESS Telefon': prev['RECIPIENT Telefon'],
+        'DELIVERY ADDRESS Email': prev['RECIPIENT Email']
+      }));
+    }
   };
 
   // Ürün verilerini güncelleme
@@ -189,6 +210,9 @@ const SiparisForm = ({ selectedLanguage }) => {
       'FIYAT': '',
       'AMOUNT': ''
     }]);
+    
+    // Checkbox'ı da sıfırla
+    setCopyRecipientToDelivery(false);
     
     setError('');
     setSuccess('');
@@ -375,7 +399,18 @@ const SiparisForm = ({ selectedLanguage }) => {
 
         {/* Delivery Address */}
         <div className="form-section">
-          <h3 className="section-title">Teslimat Adresi</h3>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+            <h3 className="section-title" style={{ margin: 0 }}>Teslimat Adresi</h3>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '14px', color: '#666' }}>
+              <input
+                type="checkbox"
+                checked={copyRecipientToDelivery}
+                onChange={(e) => handleCopyToDelivery(e.target.checked)}
+                style={{ margin: 0 }}
+              />
+              RECIPIENT bilgilerini kopyala
+            </label>
+          </div>
           <div className="form-grid">
             <div className="form-group">
               <label className="form-label">Teslimat Şirket Adı</label>

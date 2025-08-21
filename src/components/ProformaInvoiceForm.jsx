@@ -60,6 +60,7 @@ const ProformaInvoiceForm = ({ selectedLanguage }) => {
 
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [copyRecipientToDelivery, setCopyRecipientToDelivery] = useState(false);
 
   // Yeni PDF generation hook'u
   const { isGenerating, progress, error: pdfError, generatePDF: generatePDFWithHook } = usePDFGeneration();
@@ -69,6 +70,25 @@ const ProformaInvoiceForm = ({ selectedLanguage }) => {
       ...prev,
       [name]: value
     }));
+  };
+
+  // Checkbox değiştiğinde çalışan fonksiyon
+  const handleCopyToDelivery = (checked) => {
+    setCopyRecipientToDelivery(checked);
+    
+    if (checked) {
+      // Checkbox işaretlendiğinde RECIPIENT verilerini DELIVERY ADDRESS'e kopyala
+      setFormData(prev => ({
+        ...prev,
+        'DELIVERY ADDRESS Şirket Adı': prev['RECIPIENT Şirket Adı'],
+        'DELIVERY ADDRESS Adres': prev['RECIPIENT Adres'],
+        'DELIVERY ADDRESS İlçe İl Ülke': prev['RECIPIENT İlçe İl Ülke'],
+        'DELIVERY ADDRESS Vat': prev['RECIPIENT Vat'],
+        'DELIVERY ADDRESS Sorumlu Kişi': prev['RECIPIENT Sorumlu Kişi'],
+        'DELIVERY ADDRESS Telefon': prev['RECIPIENT Telefon'],
+        'DELIVERY ADDRESS Email': prev['RECIPIENT Email']
+      }));
+    }
   };
 
   // Banka bilgilerini getir
@@ -178,7 +198,7 @@ IBAN :TR29 0003 2000 0320 0000 9679 79`
       'RECIPIENT Email': '',
       'DELIVERY ADDRESS Şirket Adı': '',
       'DELIVERY ADDRESS Adres': '',
-      'DELIVERY ADDRESS İlçe İl Ülke': '',
+      'DELIVERY ADDRESS İlçe İL Ülke': '',
       'DELIVERY ADDRESS Vat': '',
       'DELIVERY ADDRESS Sorumlu Kişi': '',
       'DELIVERY ADDRESS Telefon': '',
@@ -206,6 +226,9 @@ IBAN :TR29 0003 2000 0320 0000 9679 79`
       'PRICE': '',
       'AMOUNT': ''
     }]);
+    
+    // Checkbox'ı da sıfırla
+    setCopyRecipientToDelivery(false);
     
     setError('');
     setSuccess('');
@@ -369,7 +392,20 @@ IBAN :TR29 0003 2000 0320 0000 9679 79`
 
         {/* Delivery Address Section */}
         <div className="form-section">
-          <h3 className="section-title">DELIVERY ADDRESS</h3>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+            <h3 className="section-title">DELIVERY ADDRESS</h3>
+            <div className="checkbox-group">
+              <label className="checkbox-label" style={{ fontSize: '14px', color: '#666' }}>
+                <input
+                  type="checkbox"
+                  checked={copyRecipientToDelivery}
+                  onChange={(e) => handleCopyToDelivery(e.target.checked)}
+                />
+                <span className="checkmark"></span>
+                Alıcı bilgilerini teslimat adresine kopyala
+              </label>
+            </div>
+          </div>
           <div className="form-grid">
             <div className="form-group">
               <label className="form-label">DELIVERY ADDRESS Şirket Adı</label>

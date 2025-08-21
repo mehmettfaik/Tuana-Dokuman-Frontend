@@ -424,7 +424,7 @@ IBAN :TR29 0003 2000 0320 0000 9679 79`
                   onChange={(e) => handleCopyToDelivery(e.target.checked)}
                 />
                 <span className="checkmark"></span>
-                Alıcı bilgilerini teslimat adresine kopyala (tek seferlik)
+                Alıcı bilgilerini teslimat adresine kopyala
               </label>
             </div>
           </div>
