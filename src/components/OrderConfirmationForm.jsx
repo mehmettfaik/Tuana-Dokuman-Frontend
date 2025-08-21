@@ -352,17 +352,19 @@ const OrderConfirmationForm = ({ selectedLanguage }) => {
 
         {/* Delivery Address */}
         <div className="form-section">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-            <h3 className="section-title" style={{ margin: 0 }}>Delivery Address</h3>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '14px', color: '#666' }}>
-              <input
-                type="checkbox"
-                checked={copyRecipientToDelivery}
-                onChange={(e) => handleCopyToDelivery(e.target.checked)}
-                style={{ margin: 0 }}
-              />
-              RECIPIENT bilgilerini kopyala
-            </label>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+            <h3 className="section-title">DELIVERY ADDRESS</h3>
+            <div className="checkbox-group">
+              <label className="checkbox-label" style={{ fontSize: '14px', color: '#666' }}>
+                <input
+                  type="checkbox"
+                  checked={copyRecipientToDelivery}
+                  onChange={(e) => handleCopyToDelivery(e.target.checked)}
+                />
+                <span className="checkmark"></span>
+                Alıcı bilgilerini teslimat adresine kopyala
+              </label>
+            </div>
           </div>
           <div className="form-grid">
             <div className="form-group">
