@@ -73,15 +73,6 @@ const InvoiceForm = ({ selectedLanguage }) => {
       ...prev,
       [name]: value
     }));
-
-    // Eğer RECIPIENT alanları değişiyorsa ve checkbox işaretliyse, DELIVERY ADDRESS alanlarını güncelle
-    if (copyRecipientToDelivery && name.startsWith('RECIPIENT')) {
-      const deliveryFieldName = name.replace('RECIPIENT', 'DELIVERY ADDRESS');
-      setFormData(prev => ({
-        ...prev,
-        [deliveryFieldName]: value
-      }));
-    }
   };
 
   // Checkbox değiştiğinde çalışan fonksiyon
@@ -433,7 +424,7 @@ IBAN :TR29 0003 2000 0320 0000 9679 79`
                   onChange={(e) => handleCopyToDelivery(e.target.checked)}
                 />
                 <span className="checkmark"></span>
-                Alıcı bilgilerini teslimat adresine kopyala
+                Alıcı bilgilerini teslimat adresine kopyala (tek seferlik)
               </label>
             </div>
           </div>
@@ -446,11 +437,6 @@ IBAN :TR29 0003 2000 0320 0000 9679 79`
                 value={formData['DELIVERY ADDRESS Şirket Adı']}
                 onChange={(e) => handleInputChange('DELIVERY ADDRESS Şirket Adı', e.target.value)}
                 placeholder="Teslimat şirket adı"
-                disabled={copyRecipientToDelivery}
-                style={{ 
-                  backgroundColor: copyRecipientToDelivery ? '#f8f9fa' : 'white',
-                  cursor: copyRecipientToDelivery ? 'not-allowed' : 'text'
-                }}
               />
             </div>
             
@@ -462,11 +448,6 @@ IBAN :TR29 0003 2000 0320 0000 9679 79`
                 onChange={(e) => handleInputChange('DELIVERY ADDRESS Adres', e.target.value)}
                 placeholder="Teslimat adresi"
                 rows="3"
-                disabled={copyRecipientToDelivery}
-                style={{ 
-                  backgroundColor: copyRecipientToDelivery ? '#f8f9fa' : 'white',
-                  cursor: copyRecipientToDelivery ? 'not-allowed' : 'text'
-                }}
               />
             </div>
             
@@ -478,11 +459,6 @@ IBAN :TR29 0003 2000 0320 0000 9679 79`
                 value={formData['DELIVERY ADDRESS İlçe İl Ülke']}
                 onChange={(e) => handleInputChange('DELIVERY ADDRESS İlçe İl Ülke', e.target.value)}
                 placeholder="İlçe, İl, Ülke"
-                disabled={copyRecipientToDelivery}
-                style={{ 
-                  backgroundColor: copyRecipientToDelivery ? '#f8f9fa' : 'white',
-                  cursor: copyRecipientToDelivery ? 'not-allowed' : 'text'
-                }}
               />
             </div>
             
@@ -494,11 +470,6 @@ IBAN :TR29 0003 2000 0320 0000 9679 79`
                 value={formData['DELIVERY ADDRESS Vat']}
                 onChange={(e) => handleInputChange('DELIVERY ADDRESS Vat', e.target.value)}
                 placeholder="Teslimat vergi numarası"
-                disabled={copyRecipientToDelivery}
-                style={{ 
-                  backgroundColor: copyRecipientToDelivery ? '#f8f9fa' : 'white',
-                  cursor: copyRecipientToDelivery ? 'not-allowed' : 'text'
-                }}
               />
             </div>
             
@@ -510,11 +481,6 @@ IBAN :TR29 0003 2000 0320 0000 9679 79`
                 value={formData['DELIVERY ADDRESS Sorumlu Kişi']}
                 onChange={(e) => handleInputChange('DELIVERY ADDRESS Sorumlu Kişi', e.target.value)}
                 placeholder="Teslimat sorumlu kişi"
-                disabled={copyRecipientToDelivery}
-                style={{ 
-                  backgroundColor: copyRecipientToDelivery ? '#f8f9fa' : 'white',
-                  cursor: copyRecipientToDelivery ? 'not-allowed' : 'text'
-                }}
               />
             </div>
             
@@ -526,11 +492,6 @@ IBAN :TR29 0003 2000 0320 0000 9679 79`
                 value={formData['DELIVERY ADDRESS Telefon']}
                 onChange={(e) => handleInputChange('DELIVERY ADDRESS Telefon', e.target.value)}
                 placeholder="Teslimat telefon"
-                disabled={copyRecipientToDelivery}
-                style={{ 
-                  backgroundColor: copyRecipientToDelivery ? '#f8f9fa' : 'white',
-                  cursor: copyRecipientToDelivery ? 'not-allowed' : 'text'
-                }}
               />
             </div>
             
@@ -542,11 +503,6 @@ IBAN :TR29 0003 2000 0320 0000 9679 79`
                 value={formData['DELIVERY ADDRESS Email']}
                 onChange={(e) => handleInputChange('DELIVERY ADDRESS Email', e.target.value)}
                 placeholder="Teslimat e-posta"
-                disabled={copyRecipientToDelivery}
-                style={{ 
-                  backgroundColor: copyRecipientToDelivery ? '#f8f9fa' : 'white',
-                  cursor: copyRecipientToDelivery ? 'not-allowed' : 'text'
-                }}
               />
             </div>
           </div>
