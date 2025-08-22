@@ -306,7 +306,7 @@ const PriceOfferForm = ({ selectedLanguage }) => {
                   <div className="form-group">
                     <label className="form-label">BULK MOQ (METERS)</label>
                     <input
-                      type="number"
+                      type="text"
                       className="form-input"
                       value={item['BULK MOQ (METERS)']}
                       onChange={(e) => handlePriceItemChange(item.id, 'BULK MOQ (METERS)', e.target.value)}

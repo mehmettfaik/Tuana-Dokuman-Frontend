@@ -648,7 +648,7 @@ const SiparisForm = ({ selectedLanguage }) => {
                   <div className="form-group">
                     <label className="form-label">ADET (METRE)</label>
                     <input
-                      type="number"
+                      type="text"
                       className="form-input"
                       value={item['ADET (METRE)']}
                       onChange={(e) => handleGoodsChange(item.id, 'ADET (METRE)', e.target.value)}

@@ -638,7 +638,7 @@ const DebitNoteForm = ({ selectedLanguage }) => {
                   <div className="form-group">
                     <label className="form-label">QUANTITY (METERS)</label>
                     <input
-                      type="number"
+                      type="text"
                       className="form-input"
                       value={item['QUANTITY (METERS)']}
                       onChange={(e) => handleGoodsChange(item.id, 'QUANTITY (METERS)', e.target.value)}

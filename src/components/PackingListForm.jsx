@@ -572,7 +572,7 @@ const PackingListForm = ({ selectedLanguage }) => {
                   <div className="form-group">
                     <label className="form-label">QUANTITY (METERS)</label>
                     <input
-                      type="number"
+                      type="text"
                       className="form-input"
                       value={item['QUANTITY (METERS)']}
                       onChange={(e) => handlePackingItemChange(item.id, 'QUANTITY (METERS)', e.target.value)}
@@ -610,7 +610,7 @@ const PackingListForm = ({ selectedLanguage }) => {
                   <div className="form-group">
                     <label className="form-label">GROSS WEIGHT(KG)</label>
                     <input
-                      type="number"
+                      type="text"
                       className="form-input"
                       value={item['GROSS WEIGHT(KG)']}
                       onChange={(e) => handlePackingItemChange(item.id, 'GROSS WEIGHT(KG)', e.target.value)}
@@ -622,7 +622,7 @@ const PackingListForm = ({ selectedLanguage }) => {
                   <div className="form-group">
                     <label className="form-label">NET WEIGHT (KG)</label>
                     <input
-                      type="number"
+                      type="text"
                       className="form-input"
                       value={item['NET WEIGHT (KG)']}
                       onChange={(e) => handlePackingItemChange(item.id, 'NET WEIGHT (KG)', e.target.value)}
