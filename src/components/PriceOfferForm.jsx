@@ -223,14 +223,14 @@ const PriceOfferForm = ({ selectedLanguage }) => {
                 onChange={(e) => handleInputChange('PAYMENT TERMS', e.target.value)}
               >
                 <option value="">Ödeme vadesi seçin</option>
-                <option value="30 Days">30 Days</option>
-                <option value="60 Days">60 Days</option>
-                <option value="90 Days">90 Days</option>
-                <option value="120 Days">120 Days</option>
-                <option value="150 Days">150 Days</option>
-                <option value="180 Days">180 Days</option>
-                <option value="Immediately">Immediately</option>
-                <option value="Cash in Advance">Cash in Advance</option>
+                <option value="30 DAYS">30 DAYS</option>
+                <option value="60 DAYS">60 DAYS</option>
+                <option value="90 DAYS">90 DAYS</option>
+                <option value="120 DAYS">120 DAYS</option>
+                <option value="150 DAYS">150 DAYS</option>
+                <option value="180 DAYS">180 DAYS</option>
+                <option value="IMMEDIATELY">IMMEDIATELY</option>
+                <option value="CASH IN ADVANCE">CASH IN ADVANCE</option>
               </select>
             </div>
             

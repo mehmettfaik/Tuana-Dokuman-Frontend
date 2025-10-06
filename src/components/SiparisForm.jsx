@@ -3,6 +3,20 @@ import usePDFGeneration from '../hooks/usePDFGeneration';
 import '../css/SiparisForm.css';
 
 const SiparisForm = ({ selectedLanguage }) => {
+  // Sorumlu kişiler listesi
+  const responsiblePersons = {
+    'NURAN YELMEN': {
+      name: 'NURAN YELMEN',
+      telephone: '+90 530 285 71 71',
+      email: 'NURAN@TUANATEX.COM'
+    },
+    'CENK YELMEN': {
+      name: 'CENK YELMEN',
+      telephone: '+90 333 234 45 38', 
+      email: 'CENK@TUANATEX.COM'
+    }
+  };
+
   const [formData, setFormData] = useState({
     // Sipariş specific fields
     'ORDER DAY': '',
@@ -70,6 +84,40 @@ const SiparisForm = ({ selectedLanguage }) => {
       ...prev,
       [name]: value
     }));
+  };
+
+  // Manuel giriş durumunu takip etmek için ayrı state
+  const [isCustomEntry, setIsCustomEntry] = useState(false);
+
+  // Sorumlu kişi seçimi değiştiğinde çalışan fonksiyon
+  const handleResponsiblePersonChange = (selectedPersonName) => {
+    const selectedPerson = responsiblePersons[selectedPersonName];
+    
+    if (selectedPerson) {
+      setIsCustomEntry(false);
+      setFormData(prev => ({
+        ...prev,
+        'RESPONSIBLE PERSON': selectedPerson.name,
+        'TELEPHONE': selectedPerson.telephone,
+        'EMAIL': selectedPerson.email
+      }));
+    } else if (selectedPersonName === 'custom') {
+      setIsCustomEntry(true);
+      setFormData(prev => ({
+        ...prev,
+        'RESPONSIBLE PERSON': '',
+        'TELEPHONE': '',
+        'EMAIL': ''
+      }));
+    } else {
+      setIsCustomEntry(false);
+      setFormData(prev => ({
+        ...prev,
+        'RESPONSIBLE PERSON': selectedPersonName,
+        'TELEPHONE': '',
+        'EMAIL': ''
+      }));
+    }
   };
 
   // RECIPIENT bilgilerini DELIVERY ADDRESS'e kopyalama fonksiyonu
@@ -214,6 +262,9 @@ const SiparisForm = ({ selectedLanguage }) => {
     // Checkbox'ı da sıfırla
     setCopyRecipientToDelivery(false);
     
+    // Manuel giriş durumunu da sıfırla
+    setIsCustomEntry(false);
+    
     setError('');
     setSuccess('');
   };
@@ -289,13 +340,31 @@ const SiparisForm = ({ selectedLanguage }) => {
           <div className="form-grid">
             <div className="form-group">
               <label className="form-label">SORUMLU SATIN ALMACI</label>
-              <input
-                type="text"
+              <select
                 className="form-input"
-                value={formData['RESPONSIBLE PERSON']}
-                onChange={(e) => handleInputChange('RESPONSIBLE PERSON', e.target.value)}
-                placeholder="Sorumlu kişi adını girin"
-              />
+                value={isCustomEntry ? 'custom' : formData['RESPONSIBLE PERSON']}
+                onChange={(e) => handleResponsiblePersonChange(e.target.value)}
+              >
+                <option value="">Sorumlu kişi seçin...</option>
+                {Object.keys(responsiblePersons).map(personName => (
+                  <option key={personName} value={personName}>
+                    {personName}
+                  </option>
+                ))}
+                <option value="custom">Diğer (Manuel Giriş)</option>
+              </select>
+              
+              {/* Manuel giriş için text input (sadece "Diğer" seçildiğinde göster) */}
+              {isCustomEntry && (
+                <input
+                  type="text"
+                  className="form-input"
+                  style={{ marginTop: '10px' }}
+                  placeholder="Sorumlu kişi adını yazın..."
+                  value={formData['RESPONSIBLE PERSON']}
+                  onChange={(e) => handleInputChange('RESPONSIBLE PERSON', e.target.value)}
+                />
+              )}
             </div>
             <div className="form-group">
               <label className="form-label">TELEFON</label>

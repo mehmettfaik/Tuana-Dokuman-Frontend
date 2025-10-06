@@ -3,6 +3,20 @@ import usePDFGeneration from '../hooks/usePDFGeneration';
 import '../css/CreditNoteForm.css';
 
 const CreditNoteForm = ({ selectedLanguage }) => {
+  // Sorumlu kişiler listesi
+  const responsiblePersons = {
+    'NURAN YELMEN': {
+      name: 'NURAN YELMEN',
+      telephone: '+90 530 285 71 71',
+      email: 'NURAN@TUANATEX.COM'
+    },
+    'CENK YELMEN': {
+      name: 'CENK YELMEN',
+      telephone: '+90 333 234 45 38', 
+      email: 'CENK@TUANATEX.COM'
+    }
+  };
+
   const [formData, setFormData] = useState({
     // Credit Note Information
     'INVOICE NUMBER': '',
@@ -70,6 +84,40 @@ const CreditNoteForm = ({ selectedLanguage }) => {
       ...prev,
       [name]: value
     }));
+  };
+
+  // Manuel giriş durumunu takip etmek için ayrı state
+  const [isCustomEntry, setIsCustomEntry] = useState(false);
+
+  // Sorumlu kişi seçimi değiştiğinde çalışan fonksiyon
+  const handleResponsiblePersonChange = (selectedPersonName) => {
+    const selectedPerson = responsiblePersons[selectedPersonName];
+    
+    if (selectedPerson) {
+      setIsCustomEntry(false);
+      setFormData(prev => ({
+        ...prev,
+        'RESPONSIBLE PERSON': selectedPerson.name,
+        'TELEPHONE': selectedPerson.telephone,
+        'EMAIL': selectedPerson.email
+      }));
+    } else if (selectedPersonName === 'custom') {
+      setIsCustomEntry(true);
+      setFormData(prev => ({
+        ...prev,
+        'RESPONSIBLE PERSON': '',
+        'TELEPHONE': '',
+        'EMAIL': ''
+      }));
+    } else {
+      setIsCustomEntry(false);
+      setFormData(prev => ({
+        ...prev,
+        'RESPONSIBLE PERSON': selectedPersonName,
+        'TELEPHONE': '',
+        'EMAIL': ''
+      }));
+    }
   };
 
   // RECIPIENT bilgilerini DELIVERY ADDRESS'e kopyalama fonksiyonu
@@ -207,6 +255,9 @@ const CreditNoteForm = ({ selectedLanguage }) => {
     // Checkbox'ı da sıfırla
     setCopyRecipientToDelivery(false);
     
+    // Manuel giriş durumunu da sıfırla
+    setIsCustomEntry(false);
+    
     setError('');
     setSuccess('');
   };
@@ -270,13 +321,31 @@ const CreditNoteForm = ({ selectedLanguage }) => {
           <div className="form-grid">
             <div className="form-group">
               <label className="form-label">RESPONSIBLE PERSON</label>
-              <input
-                type="text"
+              <select
                 className="form-input"
-                value={formData['RESPONSIBLE PERSON']}
-                onChange={(e) => handleInputChange('RESPONSIBLE PERSON', e.target.value)}
-                placeholder="Sorumlu kişi adı"
-              />
+                value={isCustomEntry ? 'custom' : formData['RESPONSIBLE PERSON']}
+                onChange={(e) => handleResponsiblePersonChange(e.target.value)}
+              >
+                <option value="">Sorumlu kişi seçin...</option>
+                {Object.keys(responsiblePersons).map(personName => (
+                  <option key={personName} value={personName}>
+                    {personName}
+                  </option>
+                ))}
+                <option value="custom">Diğer (Manuel Giriş)</option>
+              </select>
+              
+              {/* Manuel giriş için text input (sadece "Diğer" seçildiğinde göster) */}
+              {isCustomEntry && (
+                <input
+                  type="text"
+                  className="form-input"
+                  style={{ marginTop: '10px' }}
+                  placeholder="Sorumlu kişi adını yazın..."
+                  value={formData['RESPONSIBLE PERSON']}
+                  onChange={(e) => handleInputChange('RESPONSIBLE PERSON', e.target.value)}
+                />
+              )}
             </div>
             
             <div className="form-group">
@@ -494,14 +563,14 @@ const CreditNoteForm = ({ selectedLanguage }) => {
                 onChange={(e) => handleInputChange('Payment Terms', e.target.value)}
               >
                 <option value="">Ödeme vadesi seçin</option>
-                <option value="30 Days">30 Days</option>
-                <option value="60 Days">60 Days</option>
-                <option value="90 Days">90 Days</option>
-                <option value="120 Days">120 Days</option>
-                <option value="150 Days">150 Days</option>
-                <option value="180 Days">180 Days</option>
-                <option value="Immediately">Immediately</option>
-                <option value="Cash in Advance">Cash in Advance</option>
+                <option value="30 DAYS">30 DAYS</option>
+                <option value="60 DAYS">60 DAYS</option>
+                <option value="90 DAYS">90 DAYS</option>
+                <option value="120 DAYS">120 DAYS</option>
+                <option value="150 DAYS">150 DAYS</option>
+                <option value="180 DAYS">180 DAYS</option>
+                <option value="IMMEDIATELY">IMMEDIATELY</option>
+                <option value="CASH IN ADVANCE">CASH IN ADVANCE</option>
               </select>
             </div>
             
