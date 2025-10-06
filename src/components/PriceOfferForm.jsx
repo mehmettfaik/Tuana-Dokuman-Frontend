@@ -83,15 +83,16 @@ const PriceOfferForm = ({ selectedLanguage }) => {
     setSuccess('');
 
     try {
-      const requestData = {
-        formData: formData,
+      // Backend'e uygun formatta veri hazırlama
+      const combinedData = {
+        ...formData,
         priceItems: priceItems
       };
 
-      console.log('Gönderilen price offer data:', requestData);
+      console.log('Gönderilen price offer data:', combinedData);
       
       // Yeni 3-aşamalı PDF generation kullan
-      const success = await generatePDFWithHook(requestData, 'price-offer', selectedLanguage);
+      const success = await generatePDFWithHook(combinedData, 'price-offer', selectedLanguage);
       
       if (success) {
         setSuccess('Price Offer PDF başarıyla oluşturuldu ve indirildi!');
@@ -223,14 +224,14 @@ const PriceOfferForm = ({ selectedLanguage }) => {
                 onChange={(e) => handleInputChange('PAYMENT TERMS', e.target.value)}
               >
                 <option value="">Ödeme vadesi seçin</option>
-                <option value="30 DAYS">30 DAYS</option>
-                <option value="60 DAYS">60 DAYS</option>
-                <option value="90 DAYS">90 DAYS</option>
-                <option value="120 DAYS">120 DAYS</option>
-                <option value="150 DAYS">150 DAYS</option>
-                <option value="180 DAYS">180 DAYS</option>
-                <option value="IMMEDIATELY">IMMEDIATELY</option>
-                <option value="CASH IN ADVANCE">CASH IN ADVANCE</option>
+                <option value="30 Days">30 Days</option>
+                <option value="60 Days">60 Days</option>
+                <option value="90 Days">90 Days</option>
+                <option value="120 Days">120 Days</option>
+                <option value="150 Days">150 Days</option>
+                <option value="180 Days">180 Days</option>
+                <option value="Immediately">Immediately</option>
+                <option value="Cash in Advance">Cash in Advance</option>
               </select>
             </div>
             
