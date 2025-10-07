@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import usePDFGeneration from '../hooks/usePDFGeneration';
+import RecipientManager from './RecipientManager';
 import '../css/SiparisForm.css';
 
 const SiparisForm = ({ selectedLanguage }) => {
@@ -118,6 +119,20 @@ const SiparisForm = ({ selectedLanguage }) => {
         'EMAIL': ''
       }));
     }
+  };
+
+  // Recipient seçildiğinde çalışan fonksiyon
+  const handleRecipientSelect = (recipient) => {
+    setFormData(prev => ({
+      ...prev,
+      'RECIPIENT Şirket Adı': recipient.companyName || '',
+      'RECIPIENT Adres': recipient.address || '',
+      'RECIPIENT İlçe İl Ülke': recipient.cityStateCountry || '',
+      'RECIPIENT Vat': recipient.vat || '',
+      'RECIPIENT Sorumlu Kişi': recipient.contactPerson || '',
+      'RECIPIENT Telefon': recipient.phone || '',
+      'RECIPIENT Email': recipient.email || ''
+    }));
   };
 
   // RECIPIENT bilgilerini DELIVERY ADDRESS'e kopyalama fonksiyonu
@@ -392,6 +407,21 @@ const SiparisForm = ({ selectedLanguage }) => {
         {/* Recipient Information */}
         <div className="form-section">
           <h3 className="section-title">Alıcı Bilgileri</h3>
+          
+          {/* Recipient Manager */}
+          <RecipientManager 
+            onRecipientSelect={handleRecipientSelect}
+            selectedRecipient={{
+              companyName: formData['RECIPIENT Şirket Adı'],
+              address: formData['RECIPIENT Adres'],
+              cityStateCountry: formData['RECIPIENT İlçe İl Ülke'],
+              vat: formData['RECIPIENT Vat'],
+              contactPerson: formData['RECIPIENT Sorumlu Kişi'],
+              phone: formData['RECIPIENT Telefon'],
+              email: formData['RECIPIENT Email']
+            }}
+          />
+          
           <div className="form-grid">
             <div className="form-group">
               <label className="form-label">Alıcı Şirket Adı</label>

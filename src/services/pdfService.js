@@ -1,7 +1,7 @@
 // services/pdfService.js
 class PDFService {
   constructor() {
-    this.baseURL = process.env.REACT_APP_API_URL || 'https://tuana-dokuman-backend.onrender.com';
+    this.baseURL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
   }
 
   // Backend bağlantısını test et

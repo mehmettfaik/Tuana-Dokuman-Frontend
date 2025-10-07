@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import usePDFGeneration from '../hooks/usePDFGeneration';
 import SystemStatus from './SystemStatus';
+import RecipientManager from './RecipientManager';
 import '../css/ProformaInvoiceForm.css';
 
 const InvoiceForm = ({ selectedLanguage }) => {
@@ -121,6 +122,20 @@ const InvoiceForm = ({ selectedLanguage }) => {
         'EMAIL': ''
       }));
     }
+  };
+
+  // Recipient seçildiğinde çalışan fonksiyon
+  const handleRecipientSelect = (recipient) => {
+    setFormData(prev => ({
+      ...prev,
+      'RECIPIENT Şirket Adı': recipient.companyName || '',
+      'RECIPIENT Adres': recipient.address || '',
+      'RECIPIENT İlçe İl Ülke': recipient.cityStateCountry || '',
+      'RECIPIENT Vat': recipient.vat || '',
+      'RECIPIENT Sorumlu Kişi': recipient.contactPerson || '',
+      'RECIPIENT Telefon': recipient.phone || '',
+      'RECIPIENT Email': recipient.email || ''
+    }));
   };
 
   // Checkbox değiştiğinde çalışan fonksiyon
@@ -401,6 +416,21 @@ IBAN :TR02 0003 2000 0320 0000 9679 79`
         {/* Recipient Section */}
         <div className="form-section">
           <h3 className="section-title">RECIPIENT</h3>
+          
+          {/* Recipient Manager */}
+          <RecipientManager 
+            onRecipientSelect={handleRecipientSelect}
+            selectedRecipient={{
+              'RECIPIENT Şirket Adı': formData['RECIPIENT Şirket Adı'],
+              'RECIPIENT Adres': formData['RECIPIENT Adres'],
+              'RECIPIENT İlçe İl Ülke': formData['RECIPIENT İlçe İl Ülke'],
+              'RECIPIENT Vat': formData['RECIPIENT Vat'],
+              'RECIPIENT Sorumlu Kişi': formData['RECIPIENT Sorumlu Kişi'],
+              'RECIPIENT Telefon': formData['RECIPIENT Telefon'],
+              'RECIPIENT Email': formData['RECIPIENT Email']
+            }}
+          />
+          
           <div className="form-grid">
             <div className="form-group">
               <label className="form-label">RECIPIENT Şirket Adı</label>
