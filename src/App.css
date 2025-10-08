@@ -23,10 +23,18 @@ body {
 }
 
 .app-header {
-  text-align: center;
-  margin-bottom: 40px;
-  color: black;
-  animation: fadeInDown 0.8s ease-out;
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 10px 0;
+}
+
+.app-logo {
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
 }
 
 @keyframes fadeInDown {

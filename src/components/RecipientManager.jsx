@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import './RecipientManager.css';
 
 const RecipientManager = ({ onRecipientSelect, selectedRecipient }) => {
@@ -23,7 +24,7 @@ const RecipientManager = ({ onRecipientSelect, selectedRecipient }) => {
   const fetchRecipients = React.useCallback(async () => {
     try {
       console.log('Recipients yükleniyor...'); // Debug log
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/recipients`);
+      const response = await fetch('/api/recipients');
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -51,7 +52,7 @@ const RecipientManager = ({ onRecipientSelect, selectedRecipient }) => {
     setIsLoading(true);
     try {
       console.log('Arama yapılıyor:', query); // Debug log
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/recipients/search?q=${encodeURIComponent(query)}`);
+      const response = await fetch(`/api/recipients/search?q=${encodeURIComponent(query)}`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -94,8 +95,8 @@ const RecipientManager = ({ onRecipientSelect, selectedRecipient }) => {
       };
 
       const url = editingRecipient 
-        ? `${process.env.REACT_APP_API_URL}/api/recipients/${editingRecipient.id}`
-        : `${process.env.REACT_APP_API_URL}/api/recipients`;
+        ? `/api/recipients/${editingRecipient.id}`
+        : '/api/recipients';
       
       const method = editingRecipient ? 'PUT' : 'POST';
 
@@ -134,7 +135,7 @@ const RecipientManager = ({ onRecipientSelect, selectedRecipient }) => {
   const deleteRecipient = async (id) => {
     if (window.confirm('Bu recipient silinsin mi?')) {
       try {
-        const response = await fetch(`${process.env.REACT_APP_API_URL}/api/recipients/${id}`, {
+        const response = await fetch(`/api/recipients/${id}`, {
           method: 'DELETE'
         });
         
@@ -317,7 +318,7 @@ const RecipientManager = ({ onRecipientSelect, selectedRecipient }) => {
       </div>
 
       {/* Yönetim Modal */}
-      {showManageModal && (
+      {showManageModal && createPortal(
         <div className="modal-overlay">
           <div className="modal-content recipient-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
@@ -457,7 +458,8 @@ const RecipientManager = ({ onRecipientSelect, selectedRecipient }) => {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

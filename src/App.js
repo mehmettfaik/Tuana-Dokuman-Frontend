@@ -12,8 +12,7 @@ function App() {
   return (
     <div className="app-container">
       <div className="app-header">
-        <h2>TUANA TEKSTİL - Dijital Belge Oluşturucu</h2>
-        <p>Belgelerinizi dijital olarak oluşturun ve indirin</p>
+        <img src="/logo192.png" alt="Tuana Tekstil" className="app-logo" />
       </div>
       
       <div className="app-content">
