@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import usePDFGeneration from '../hooks/usePDFGeneration';
 import RecipientManager from './RecipientManager';
-import '../css/ProformaInvoiceForm.css';
+import '../css/PackingListForm.css';
 
 const PackingListForm = ({ selectedLanguage }) => {
   // Sorumlu kişiler listesi
@@ -56,7 +56,7 @@ const PackingListForm = ({ selectedLanguage }) => {
   const [packingItems, setPackingItems] = useState([
     {
       id: 1,
-      'ARTICLE NUMBER / COMPOSITION / CUSTOMS CODE': '',
+      'ARTICLE NUMBER / COMPOSITION / CUSTOMS CODE': '                /                      / ',
       'FABRIC WEIGHT / WIDHT': '',
       'QUANTITY (METERS)': '',
       'ROLL NUMBER ROLL DIMENSIONS': '',
@@ -68,6 +68,7 @@ const PackingListForm = ({ selectedLanguage }) => {
 
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [isGeneratingLabels, setIsGeneratingLabels] = useState(false);
   
   // RECIPIENT bilgilerini DELIVERY ADDRESS'e kopyalama için state
   const [copyRecipientToDelivery, setCopyRecipientToDelivery] = useState(false);
@@ -164,7 +165,7 @@ const PackingListForm = ({ selectedLanguage }) => {
     const newId = Math.max(...packingItems.map(item => item.id)) + 1;
     setPackingItems(prev => [...prev, {
       id: newId,
-      'ARTICLE NUMBER / COMPOSITION / CUSTOMS CODE': '',
+      'ARTICLE NUMBER / COMPOSITION / CUSTOMS CODE': '                /                      / ',
       'FABRIC WEIGHT / WIDHT': '',
       'QUANTITY (METERS)': '',
       'ROLL NUMBER ROLL DIMENSIONS': '',
@@ -178,6 +179,100 @@ const PackingListForm = ({ selectedLanguage }) => {
   const removePackingItem = (id) => {
     if (packingItems.length > 1) {
       setPackingItems(prev => prev.filter(item => item.id !== id));
+    }
+  };
+
+  // Ürün etiketleri oluşturma fonksiyonu
+  const handleCreateProductLabels = async () => {
+    setIsGeneratingLabels(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      // Validation: En az bir ürün var mı kontrol et
+      if (!packingItems || packingItems.length === 0) {
+        throw new Error('Etiket oluşturmak için en az bir ürün eklemelisiniz.');
+      }
+
+      // Validation: Boş article number kontrolü
+      const emptyItems = packingItems.filter(item => 
+        !item['ARTICLE NUMBER / COMPOSITION / CUSTOMS CODE'] || 
+        item['ARTICLE NUMBER / COMPOSITION / CUSTOMS CODE'].trim() === '' ||
+        item['ARTICLE NUMBER / COMPOSITION / CUSTOMS CODE'].trim() === '                /                      /'
+      );
+
+      if (emptyItems.length > 0) {
+        throw new Error('Tüm ürünler için Article Number / Composition / Customs Code bilgisi doldurulmalıdır.');
+      }
+
+      // Packing items'ları API için uygun formata çevir
+      const labelData = {
+        items: packingItems.map(item => ({
+          articleNumber: item['ARTICLE NUMBER / COMPOSITION / CUSTOMS CODE'],
+          fabricWeight: item['FABRIC WEIGHT / WIDHT'],
+          quantity: item['QUANTITY (METERS)'],
+          rollNumber: item['ROLL NUMBER ROLL DIMENSIONS'],
+          lot: item['LOT'],
+          grossWeight: item['GROSS WEIGHT(KG)'],
+          netWeight: item['NET WEIGHT (KG)']
+        })),
+        companyInfo: {
+          responsiblePerson: formData['RESPONSIBLE PERSON'],
+          telephone: formData['TELEPHONE'],
+          email: formData['EMAIL']
+        },
+        invoiceNumber: formData['INVOICE NUMBER']
+      };
+
+      console.log('Etiket verileri gönderiliyor:', labelData);
+
+      const response = await fetch('http://localhost:3001/api/pdf/generate-product-label', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(labelData)
+      });
+
+      if (!response.ok) {
+        // Server'dan dönen hata mesajını almaya çalış
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          if (errorData.error) {
+            errorMessage += ` - ${errorData.error}`;
+          }
+          if (errorData.message) {
+            errorMessage += ` - ${errorData.message}`;
+          }
+          console.error('Server error details:', errorData);
+        } catch (e) {
+          // JSON parse edilemezse sadece status code'u göster
+          console.error('Could not parse error response:', e);
+        }
+        throw new Error(errorMessage);
+      }
+
+      // PDF blob'unu al
+      const blob = await response.blob();
+      
+      // Dosyayı otomatik indir
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `product-labels-${formData['INVOICE NUMBER'] || 'unnamed'}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      setSuccess('Ürün etiketleri başarıyla oluşturuldu ve indirildi!');
+      
+    } catch (error) {
+      console.error('Etiket oluşturma hatası:', error);
+      setError('Ürün etiketleri oluşturulurken hata oluştu: ' + (error.message || error.toString()));
+    } finally {
+      setIsGeneratingLabels(false);
     }
   };
 
@@ -620,13 +715,30 @@ const PackingListForm = ({ selectedLanguage }) => {
         <div className="form-section">
           <div className="goods-header">
             <h3 className="section-title">PACKING DETAILS</h3>
-            <button
-              type="button"
-              className="btn btn-add-goods"
-              onClick={addPackingItem}
-            >
-              + Yeni Ürün Ekle
-            </button>
+            <div className="header-buttons">
+              <button
+                type="button"
+                className="btn btn-create-label"
+                onClick={handleCreateProductLabels}
+                disabled={isGeneratingLabels || isGenerating}
+              >
+                {isGeneratingLabels ? (
+                  <>
+                    <span className="spinner"></span>
+                    Etiketler Oluşturuluyor...
+                  </>
+                ) : (
+                  <>📋 Etiket Oluştur</>
+                )}
+              </button>
+              <button
+                type="button"
+                className="btn btn-add-goods"
+                onClick={addPackingItem}
+              >
+                + Yeni Ürün Ekle
+              </button>
+            </div>
           </div>
           
           {packingItems.map((item, index) => (

@@ -1,0 +1,49 @@
+/* Header buttons container */
+.header-buttons {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* Existing add goods button style */
+.btn-add-goods {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.btn-add-goods:hover {
+  background-color: #218838;
+}
+
+/* New create label button style */
+.btn-create-label {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btn-create-label:hover {
+  background-color: #0056b3;
+}
+
+/* Ensure goods-header has proper layout */
+.goods-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
