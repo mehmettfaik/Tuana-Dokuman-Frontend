@@ -17,8 +17,8 @@ const LanguageSelector = ({ selectedLanguage, setSelectedLanguage, selectedDocTy
         required
       >
         <option value="">Dil Seçiniz</option>
-        <option value="turkish">Türkçe</option>
-        <option value="english">İngilizce</option>
+        <option value="tr">Türkçe</option>
+        <option value="en">İngilizce</option>
       </select>
     </div>
   );
