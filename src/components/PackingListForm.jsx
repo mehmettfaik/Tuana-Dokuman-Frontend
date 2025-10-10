@@ -760,7 +760,7 @@ const PackingListForm = ({ selectedLanguage }) => {
               <div className="goods-container">
                 <div className="goods-grid-row">
                   <div className="form-group">
-                    <label className="form-label">ARTICLE NUMBER / COMPOSITION / CUSTOMS CODE</label>
+                    <label className="form-label">ARTICLE NUMBER / COMPOSITION / CUSTOMS CODE *-her bilgi arasında "/" işareti kullan!</label>
                     <textarea
                       className="form-textarea"
                       value={item['ARTICLE NUMBER / COMPOSITION / CUSTOMS CODE']}
