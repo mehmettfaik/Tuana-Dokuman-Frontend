@@ -287,7 +287,7 @@ const CreditNoteForm = ({ selectedLanguage }) => {
     <div className="credit-form-container">
       <div className="credit-form-header">
         <h2>CREDIT NOTE</h2>
-        <p>İade faturası bilgilerini doldurun</p>
+        <p>İADE FATURASI BİLGİLERİNİ DOLDURUN</p>
       </div>
 
       {/* Error & Success Messages */}

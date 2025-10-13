@@ -310,7 +310,7 @@ IBAN :TR02 0003 2000 0320 0000 9679 79`
     <div className="proforma-form-container">
       <div className="proforma-form-header">
         <h2>PROFORMA INVOICE</h2>
-        <p>Proforma fatura bilgilerini doldurun</p>
+        <p>PROFORMA FATURA BİLGİLERİNİ DOLDURUN</p>
       </div>
 
       {/* Sistem Durumu */}

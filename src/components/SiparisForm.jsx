@@ -288,7 +288,7 @@ const SiparisForm = ({ selectedLanguage }) => {
     <div className="siparis-form-container">
       <div className="siparis-form-header">
         <h2>SİPARİŞ FORMU</h2>
-        <p>Sipariş bilgilerini doldurun ve PDF olarak oluşturun</p>
+        <p>SİPARİŞ BİLGİLERİNİ DOLDURUN.</p>
       </div>
 
       {error && (

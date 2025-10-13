@@ -16,9 +16,9 @@ const LanguageSelector = ({ selectedLanguage, setSelectedLanguage, selectedDocTy
         onChange={(e) => setSelectedLanguage(e.target.value)}
         required
       >
-        <option value="">Dil Seçiniz</option>
-        <option value="tr">Türkçe</option>
-        <option value="en">İngilizce</option>
+        <option value="">DİL SEÇİNİZ</option>
+        <option value="tr">TÜRKÇE</option>
+        <option value="en">İNGİLİZCE</option>
       </select>
     </div>
   );

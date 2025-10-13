@@ -4,21 +4,21 @@ import React from 'react';
 const SelectDocument = ({ selectedDocType, setSelectedDocType }) => {
   return (
     <div>
-      <label>Belge Türü:</label>
+      <label>BELGE TÜRÜ:</label>
       <select
         value={selectedDocType}
         onChange={(e) => setSelectedDocType(e.target.value)}
       >
-        <option value="">Belge Seçiniz</option>
-        <option value="teknikFoy">Technical Sheet</option>
-        <option value="proformaInvoice">Proforma Invoice</option>
-        <option value="invoice">Invoice</option>
-        <option value="packingList">Packing List</option>
-        <option value="creditNote">Credit Note</option>
-        <option value="debitNote">Debit Note</option>
-        <option value="orderConfirmation">Order Confirmation</option>
-        <option value="siparis">Sipariş Formu</option>
-        <option value="priceOffer">Price Offer</option>
+        <option value="">BELGE SEÇİNİZ</option>
+        <option value="teknikFoy">TECHNICAL SHEET</option>
+        <option value="proformaInvoice">PROFORMA INVOICE</option>
+        <option value="invoice">INVOICE</option>
+        <option value="packingList">PACKING LIST</option>
+        <option value="creditNote">CREDIT NOTE</option>
+        <option value="debitNote">DEBIT NOTE</option>
+        <option value="orderConfirmation">ORDER CONFIRMATION</option>
+        <option value="siparis">SİPARİŞ FORMU</option>
+        <option value="priceOffer">PRICE OFFER</option>
 
         {/* İleride başka belgeler eklersen buraya */}
       </select>

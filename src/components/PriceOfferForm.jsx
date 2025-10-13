@@ -133,7 +133,7 @@ const PriceOfferForm = ({ selectedLanguage }) => {
     <div className="price-offer-form-container">
       <div className="price-offer-form-header">
         <h2>PRICE OFFER</h2>
-        <p>Fiyat teklifi bilgilerini doldurun ve PDF olarak oluşturun</p>
+        <p>FİYAT TEKLİFİ BİLGİLERİNİ DOLDURUN.</p>
       </div>
 
       {error && (

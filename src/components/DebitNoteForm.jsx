@@ -287,7 +287,7 @@ const DebitNoteForm = ({ selectedLanguage }) => {
     <div className="debit-form-container">
       <div className="debit-form-header">
         <h2>DEBIT NOTE</h2>
-        <p>İade faturası bilgilerini doldurun</p>
+        <p>İADE FATURASI BİLGİLERİNİ DOLDURUN</p>
       </div>
 
       {/* Error & Success Messages */}

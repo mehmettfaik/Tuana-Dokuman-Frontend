@@ -221,6 +221,16 @@ const PackingListForm = ({ selectedLanguage }) => {
           telephone: formData['TELEPHONE'],
           email: formData['EMAIL']
         },
+        // CLIENT - InvoiceTemplate'deki gibi aynı formData alanını kullan
+        client: {
+          companyName: formData['RECIPIENT Şirket Adı'] || formData.recipientCompany || '',
+          address: formData['RECIPIENT Adres'] || formData.recipientAddress || '',
+          cityStateCountry: formData['RECIPIENT İlçe İl Ülke'] || formData.recipientCityStateCountry || '',
+          vat: formData['RECIPIENT Vat'] || formData.recipientVat || '',
+          contactPerson: formData['RECIPIENT Sorumlu Kişi'] || formData.recipientContactPerson || '',
+          phone: formData['RECIPIENT Telefon'] || formData.recipientPhone || '',
+          email: formData['RECIPIENT Email'] || formData.recipientEmail || ''
+        },
         invoiceNumber: formData['INVOICE NUMBER']
       };
 
@@ -355,7 +365,7 @@ const PackingListForm = ({ selectedLanguage }) => {
     <div className="proforma-form-container">
       <div className="proforma-form-header">
         <h2>PACKING LIST</h2>
-        <p>Packing list bilgilerini doldurun</p>
+        <p>PACKING LIST BİLGİLERİNİ DOLDURUN</p>
       </div>
 
       {/* Error & Success Messages */}

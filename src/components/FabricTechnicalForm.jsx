@@ -156,7 +156,7 @@ const FabricTechnicalForm = ({ selectedLanguage }) => {
     <div className="fabric-form-container">
       <div className="fabric-form-header">
         <h2>TECHNICAL SHEET</h2>
-        <p>Kumaş teknik bilgi formunu doldurun</p>
+        <p>KUMAŞ TEKNİK BİLGİ FORMUNU DOLDURUN</p>
       </div>
 
       {/* Error & Success Messages */}

@@ -281,7 +281,7 @@ const OrderConfirmationForm = ({ selectedLanguage }) => {
     <div className="order-confirmation-form-container">
       <div className="order-confirmation-form-header">
         <h2>ORDER CONFIRMATION</h2>
-        <p>Sipariş onay belgesi oluşturun</p>
+        <p>SİPARİŞ ONAY BELGESİ OLUŞTURUN</p>
       </div>
 
       {error && <div className="alert alert-error">{error}</div>}
