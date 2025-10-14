@@ -51,6 +51,8 @@ const InvoiceForm = ({ selectedLanguage }) => {
     'Kur Bilgisi': '',
     'KDV Ekle Enabled': false,
     'KDV': '',
+    'Discount Enabled': false,
+    'Discount': '',
     'Banka Bilgileri': '',
     
     // Payment & Shipping Details
@@ -178,22 +180,25 @@ IBAN :TR02 0003 2000 0320 0000 9679 79`
     return bankInfos[currency] || '';
   };
 
+  // Virgül karakterini kaldıran fonksiyon
+  const removeCommas = (value) => {
+    return value.replace(/,/g, '');
+  };
+
   // Ürün verilerini güncelleme
   const handleGoodsChange = (id, field, value) => {
+    // QUANTITY ve PRICE alanlarında virgül kullanımını engelle
+    if (field === 'QUANTITY (METERS)' || field === 'PRICE') {
+      value = removeCommas(value);
+    }
     setGoods(prev => prev.map(item => {
       if (item.id === id) {
-        // QUANTITY (METERS) ve PRICE alanlarında virgülü engelle
-        let processedValue = value;
-        if (field === 'QUANTITY (METERS)' || field === 'PRICE') {
-          processedValue = value.replace(/,/g, ''); // Virgülleri kaldır
-        }
-        
-        const updatedItem = { ...item, [field]: processedValue };
+        const updatedItem = { ...item, [field]: value };
         
         // QUANTITY veya PRICE değiştiğinde AMOUNT'u otomatik hesapla
         if (field === 'QUANTITY (METERS)' || field === 'PRICE') {
-          const quantity = parseFloat(field === 'QUANTITY (METERS)' ? processedValue : updatedItem['QUANTITY (METERS)']) || 0;
-          const price = parseFloat(field === 'PRICE' ? processedValue : updatedItem['PRICE']) || 0;
+          const quantity = parseFloat(field === 'QUANTITY (METERS)' ? value : updatedItem['QUANTITY (METERS)']) || 0;
+          const price = parseFloat(field === 'PRICE' ? value : updatedItem['PRICE']) || 0;
           
           // Miktar ve fiyat varsa çarpma işlemi yap
           if (quantity > 0 && price > 0) {
@@ -280,6 +285,8 @@ IBAN :TR02 0003 2000 0320 0000 9679 79`
       'Kur Bilgisi': '',
       'KDV Ekle Enabled': false,
       'KDV': '',
+      'Discount Enabled': false,
+      'Discount': '',
       'Banka Bilgileri': '',
       'Notlar': '',
       'Payment Terms': '',
@@ -664,6 +671,30 @@ IBAN :TR02 0003 2000 0320 0000 9679 79`
                 />
               )}
             </div>
+
+            <div className="form-group">
+              <div className="checkbox-group">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={formData['Discount Enabled']}
+                    onChange={(e) => handleInputChange('Discount Enabled', e.target.checked)}
+                  />
+                  <span className="checkmark"></span>
+                  Discount
+                </label>
+              </div>
+              {formData['Discount Enabled'] && (
+                <input
+                  type="text"
+                  className="form-input"
+                  value={formData['Discount']}
+                  onChange={(e) => handleInputChange('Discount', e.target.value)}
+                  placeholder="İndirim miktarı girin"
+                  style={{ marginTop: '10px' }}
+                />
+              )}
+            </div>
             
             <div className="form-group">
               <label className="form-label">Banka Bilgileri</label>
@@ -854,6 +885,11 @@ IBAN :TR02 0003 2000 0320 0000 9679 79`
                       className="form-input"
                       value={item['QUANTITY (METERS)']}
                       onChange={(e) => handleGoodsChange(item.id, 'QUANTITY (METERS)', e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === ',') {
+                          e.preventDefault();
+                        }
+                      }}
                       placeholder="Miktar (metre)"
                       step="0.01"
                     />
@@ -868,6 +904,11 @@ IBAN :TR02 0003 2000 0320 0000 9679 79`
                       className="form-input"
                       value={item['PRICE']}
                       onChange={(e) => handleGoodsChange(item.id, 'PRICE', e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === ',') {
+                          e.preventDefault();
+                        }
+                      }}
                       placeholder="Birim fiyat (USD/EUR) Belirtiniz"
                     />
                   </div>

@@ -48,6 +48,8 @@ const ProformaInvoiceForm = ({ selectedLanguage }) => {
     'Kur Bilgisi': '',
     'KDV Ekle Enabled': false,
     'KDV': '',
+    'Discount Enabled': false,
+    'Discount': '',
     'Banka Bilgileri': '',
     
     // Payment & Shipping Details
@@ -179,18 +181,12 @@ IBAN :TR02 0003 2000 0320 0000 9679 79`
   const handleGoodsChange = (id, field, value) => {
     setGoods(prev => prev.map(item => {
       if (item.id === id) {
-        // QUANTITY (METERS) ve PRICE alanlarında virgülü engelle
-        let processedValue = value;
-        if (field === 'QUANTITY (METERS)' || field === 'PRICE') {
-          processedValue = value.replace(/,/g, ''); // Virgülleri kaldır
-        }
-        
-        const updatedItem = { ...item, [field]: processedValue };
+        const updatedItem = { ...item, [field]: value };
         
         // QUANTITY veya PRICE değiştiğinde AMOUNT'u otomatik hesapla
         if (field === 'QUANTITY (METERS)' || field === 'PRICE') {
-          const quantity = parseFloat(field === 'QUANTITY (METERS)' ? processedValue : updatedItem['QUANTITY (METERS)']) || 0;
-          const price = parseFloat(field === 'PRICE' ? processedValue : updatedItem['PRICE']) || 0;
+          const quantity = parseFloat(field === 'QUANTITY (METERS)' ? value : updatedItem['QUANTITY (METERS)']) || 0;
+          const price = parseFloat(field === 'PRICE' ? value : updatedItem['PRICE']) || 0;
           
           // Miktar ve fiyat varsa çarpma işlemi yap
           if (quantity > 0 && price > 0) {
@@ -276,6 +272,8 @@ IBAN :TR02 0003 2000 0320 0000 9679 79`
       'Kur Bilgisi': '',
       'KDV Ekle Enabled': false,
       'KDV': '',
+      'Discount Enabled': false,
+      'Discount': '',
       'Banka Bilgileri': '',
       'Notlar': '',
       'Payment Terms': '',
@@ -638,6 +636,30 @@ IBAN :TR02 0003 2000 0320 0000 9679 79`
                   value={formData['KDV']}
                   onChange={(e) => handleInputChange('KDV', e.target.value)}
                   placeholder="KDV değeri girin"
+                  style={{ marginTop: '10px' }}
+                />
+              )}
+            </div>
+
+            <div className="form-group">
+              <div className="checkbox-group">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={formData['Discount Enabled']}
+                    onChange={(e) => handleInputChange('Discount Enabled', e.target.checked)}
+                  />
+                  <span className="checkmark"></span>
+                  Discount
+                </label>
+              </div>
+              {formData['Discount Enabled'] && (
+                <input
+                  type="text"
+                  className="form-input"
+                  value={formData['Discount']}
+                  onChange={(e) => handleInputChange('Discount', e.target.value)}
+                  placeholder="İndirim miktarı girin"
                   style={{ marginTop: '10px' }}
                 />
               )}
