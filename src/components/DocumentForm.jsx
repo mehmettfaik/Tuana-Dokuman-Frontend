@@ -9,7 +9,8 @@ import CreditNoteForm from './CreditNoteForm';
 import DebitNoteForm from './DebitNoteForm';
 import OrderConfirmationForm from './OrderConfirmationForm';
 import SiparisForm from './SiparisForm'; 
-import PriceOfferForm from './PriceOfferForm'; 
+import PriceOfferForm from './PriceOfferForm';
+import HangersShipmentForm from './HangersShipmentForm'; 
 
 const fieldMap = {
   fiyatTeklif: [
@@ -68,6 +69,11 @@ const DocumentForm = ({ selectedDocType, selectedLanguage }) => {
   // Eğer price offer seçilmişse, özel form komponentini göster
   if (selectedDocType === 'priceOffer') {
     return <PriceOfferForm selectedLanguage={selectedLanguage} />;
+  }
+
+  // Eğer hangers shipment seçilmişse, özel form komponentini göster
+  if (selectedDocType === 'hangersShipment') {
+    return <HangersShipmentForm selectedLanguage={selectedLanguage} />;
   }
 
   const handleChange = (e, fieldName) => {

@@ -19,6 +19,7 @@ const SelectDocument = ({ selectedDocType, setSelectedDocType }) => {
         <option value="orderConfirmation">ORDER CONFIRMATION</option>
         <option value="siparis">SİPARİŞ FORMU</option>
         <option value="priceOffer">PRICE OFFER</option>
+        <option value="hangersShipment">HANGERS SHIPMENT DETAILS SHEET</option>
 
         {/* İleride başka belgeler eklersen buraya */}
       </select>
