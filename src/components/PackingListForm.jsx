@@ -770,8 +770,11 @@ const PackingListForm = ({ selectedLanguage }) => {
               <div className="goods-container">
                 <div className="goods-grid-row">
                   <div className="form-group">
-                    <label className="form-label">ARTICLE NUMBER / COMPOSITION / CUSTOMS CODE *-her bilgi arasında "/" işareti kullan!</label>
-                    <textarea
+                      <label className="form-label">
+                      ARTICLE NUMBER / COMPOSITION / CUSTOMS CODE{" "}
+                      <span style={{ color: 'red' }}>*-her bilgi arasında "/" işareti kullan!</span>
+                    </label>
+                      <textarea
                       className="form-textarea"
                       value={item['ARTICLE NUMBER / COMPOSITION / CUSTOMS CODE']}
                       onChange={(e) => handlePackingItemChange(item.id, 'ARTICLE NUMBER / COMPOSITION / CUSTOMS CODE', e.target.value)}

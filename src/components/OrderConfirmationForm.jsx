@@ -545,6 +545,24 @@ const OrderConfirmationForm = ({ selectedLanguage }) => {
           </div>
         </div>
 
+                {/* Notes Section */}
+        <div className="form-section">
+          <h3 className="section-title">NOTLAR</h3>
+          <div className="form-grid">
+            <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+              <label className="form-label">Notlar</label>
+              <textarea
+                className="form-textarea"
+                value={formData['Notlar']}
+                onChange={(e) => handleInputChange('Notlar', e.target.value)}
+                placeholder="Buraya notlarınızı yazabilirsiniz..."
+                rows="6"
+              />
+            </div>
+          </div>
+        </div>
+
+
     {/* Payment & Shipping Details Section */}
         <div className="form-section">
           <h3 className="section-title">PAYMENT & SHIPPING DETAILS</h3>
