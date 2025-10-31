@@ -42,6 +42,7 @@ class PDFService {
   // 1. PDF üretimini başlat
   async startPDFGeneration(docType, formData, language = 'en') {
     try {
+      console.log(`Starting PDF generation for docType: ${docType}, language: ${language}`);
       const response = await fetch(`${this.baseURL}/api/pdf/start`, {
         method: 'POST',
         mode: 'cors',
@@ -56,8 +57,28 @@ class PDFService {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          console.error('PDF start generation error details:', errorData);
+          
+          if (errorData.error) {
+            errorMessage += ` - ${errorData.error}`;
+          }
+          if (errorData.message) {
+            errorMessage += ` - ${errorData.message}`;
+          }
+          if (errorData.details) {
+            errorMessage += ` - Details: ${errorData.details}`;
+          }
+          if (errorData.stack) {
+            console.error('Backend stack trace:', errorData.stack);
+          }
+        } catch (parseError) {
+          console.error('Could not parse error response:', parseError);
+        }
+        
+        throw new Error(errorMessage);
       }
 
       const result = await response.json();
@@ -71,16 +92,36 @@ class PDFService {
   // 2. PDF durumunu kontrol et
   async checkPDFStatus(jobId) {
     try {
+      console.log(`Checking PDF status for job: ${jobId}`);
       const response = await fetch(`${this.baseURL}/api/pdf/status/${jobId}`);
       
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          console.error('Backend error details:', errorData);
+          
+          if (errorData.error) {
+            errorMessage += ` - ${errorData.error}`;
+          }
+          if (errorData.message) {
+            errorMessage += ` - ${errorData.message}`;
+          }
+          if (errorData.details) {
+            errorMessage += ` - Details: ${errorData.details}`;
+          }
+        } catch (parseError) {
+          console.error('Could not parse error response:', parseError);
+        }
+        
+        throw new Error(errorMessage);
       }
 
-      return await response.json();
+      const statusData = await response.json();
+      console.log('PDF status response:', statusData);
+      return statusData;
     } catch (error) {
-      console.error('Error checking PDF status:', error);
+      console.error('Error checking PDF status for job:', jobId, error);
       throw error;
     }
   }
@@ -123,15 +164,21 @@ class PDFService {
   async waitForPDFCompletion(jobId, onProgress = null, timeout = 60000) {
     const startTime = Date.now();
     const pollInterval = 1000; // 1 saniye
+    let pollCount = 0;
 
     return new Promise((resolve, reject) => {
       const poll = async () => {
         try {
-          if (Date.now() - startTime > timeout) {
-            reject(new Error('PDF generation timeout'));
+          pollCount++;
+          const elapsed = Date.now() - startTime;
+          
+          if (elapsed > timeout) {
+            console.error(`PDF generation timeout after ${elapsed}ms for job: ${jobId}`);
+            reject(new Error(`PDF generation timeout after ${Math.round(elapsed/1000)}s (Job: ${jobId})`));
             return;
           }
 
+          console.log(`Polling PDF status (attempt ${pollCount}) for job: ${jobId}`);
           const status = await this.checkPDFStatus(jobId);
           
           // Progress callback'i varsa çağır
@@ -140,14 +187,28 @@ class PDFService {
           }
 
           if (status.status === 'completed') {
+            console.log(`PDF generation completed for job: ${jobId}`);
             resolve(status);
           } else if (status.status === 'failed') {
-            reject(new Error(status.error || 'PDF generation failed'));
+            console.error(`PDF generation failed for job: ${jobId}`, status);
+            const errorMessage = status.error || status.message || 'PDF generation failed';
+            const detailedError = `PDF Generation Failed (Job: ${jobId}) - ${errorMessage}`;
+            
+            if (status.details) {
+              console.error('Failure details:', status.details);
+            }
+            if (status.stack) {
+              console.error('Stack trace:', status.stack);
+            }
+            
+            reject(new Error(detailedError));
           } else {
             // Hala pending/processing, tekrar kontrol et
+            console.log(`PDF status: ${status.status} for job: ${jobId}, retrying in ${pollInterval}ms`);
             setTimeout(poll, pollInterval);
           }
         } catch (error) {
+          console.error(`Error during PDF status polling for job: ${jobId}`, error);
           reject(error);
         }
       };
@@ -170,16 +231,35 @@ class PDFService {
         return `${safeProformaName}_${isTurkish ? 'Proforma-Fatura' : 'Proforma-Invoice'}.pdf`;
         
       case 'invoice':
-        const invoiceNumber = formData['INVOICE NUMBER'] || 'Invoice';
         const invoiceCompany = formData['RECIPIENT Şirket Adı'] || 'Company';
-        const safeInvoiceName = `${invoiceNumber}_${invoiceCompany}`.replace(/[^a-zA-Z0-9-_\s]/g, '').replace(/\s+/g, '-');
+        const safeInvoiceName = `${invoiceCompany}`.replace(/[^a-zA-Z0-9-_\s]/g, '').replace(/\s+/g, '-');
         return `${safeInvoiceName}_${isTurkish ? 'Fatura' : 'Invoice'}.pdf`;
         
       case 'packing-list':
-        const packingInvoiceNumber = formData['INVOICE NUMBER'] || 'No-Invoice-Number';
         const packingCompany = formData['RECIPIENT Şirket Adı'] || 'Company';
-        const safePackingName = `${packingInvoiceNumber}_${packingCompany}`.replace(/[^a-zA-Z0-9-_\s]/g, '').replace(/\s+/g, '-');
-        return `${safePackingName}_${isTurkish ? 'Çeki-Listesi' : 'Packing-List'}.pdf`;
+        let articleNumberFull = formData['ARTICLE NUMBER / COMPOSITION / CUSTOMS CODE'] || '';
+        
+        // Eğer direkt field boşsa, packingItems array'ini kontrol et
+        if (!articleNumberFull && formData.packingItems && formData.packingItems.length > 0) {
+          articleNumberFull = formData.packingItems[0]['ARTICLE NUMBER / COMPOSITION / CUSTOMS CODE'] || '';
+        }
+        
+        // Eğer hala boşsa, goods array'ini kontrol et
+        if (!articleNumberFull && formData.goods && formData.goods.length > 0) {
+          articleNumberFull = formData.goods[0]['ARTICLE NUMBER / COMPOSITION / CUSTOMS CODE'] || '';
+        }
+        
+        // Varsayılan değer ata
+        if (!articleNumberFull) {
+          articleNumberFull = 'No-Article';
+        }
+        
+        // İlk "/" işaretine kadar olan kısmı al
+        const articlePrefix = articleNumberFull.split('/')[0].trim();
+        const safeArticlePrefix = articlePrefix.replace(/[^a-zA-Z0-9-_\s]/g, '').replace(/\s+/g, '-');
+        const safePackingCompany = packingCompany.replace(/[^a-zA-Z0-9-_\s]/g, '').replace(/\s+/g, '-');
+        
+        return `${safeArticlePrefix}-${safePackingCompany}-${isTurkish ? 'Çeki-Listesi' : 'Packing-List'}.pdf`;
         
       case 'credit-note':
         const creditNumber = formData['CREDIT NOTE NUMBER'] || 'Credit-Note';
@@ -210,6 +290,12 @@ class PDFService {
         const articleCode = formData['ARTICLE CODE'] || 'Technical';
         const safeArticleCode = articleCode.replace(/[^a-zA-Z0-9-_\s]/g, '').replace(/\s+/g, '-');
         return `${safeArticleCode}_${isTurkish ? 'Teknik-Foy' : 'Technical-Specification'}.pdf`;
+
+      case 'hangers-shipment':
+        const trackingCode = formData['TRACKING CODE'] || 'No-Tracking';
+        const courier = formData['COURIER'] || 'No-Courier';
+        const safeTrackingName = `${trackingCode}_${courier}`.replace(/[^a-zA-Z0-9-_\s]/g, '').replace(/\s+/g, '-');
+        return `${safeTrackingName}_${isTurkish ? 'Aski-Gonderi-Detay' : 'Hangers-Shipment-Details'}.pdf`;
         
       default:
         return `${docType}_${timestamp}.pdf`;

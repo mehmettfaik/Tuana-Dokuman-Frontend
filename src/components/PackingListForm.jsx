@@ -1,9 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import usePDFGeneration from '../hooks/usePDFGeneration';
 import RecipientManager from './RecipientManager';
 import '../css/PackingListForm.css';
 
 const PackingListForm = ({ selectedLanguage }) => {
+  // Firma listesi
+  const companies = [
+    'AKBASLAR',
+    'ADA (SÜZER)',
+    'SAFIRA',
+    'BEZ ',
+    'HARPUT',
+    'ADIL UCAR'
+  ];
+
   // Sorumlu kişiler listesi
   const responsiblePersons = {
     'NURAN YELMEN': {
@@ -21,7 +31,7 @@ const PackingListForm = ({ selectedLanguage }) => {
   const [formData, setFormData] = useState({
     // Invoice Information
     'INVOICE NUMBER': '',
-    
+
     // Responsible Person
     'RESPONSIBLE PERSON': '',
     'TELEPHONE': '',
@@ -69,12 +79,29 @@ const PackingListForm = ({ selectedLanguage }) => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isGeneratingLabels, setIsGeneratingLabels] = useState(false);
+  const [isOCRData, setIsOCRData] = useState(false);
+  
+  // Yeni state'ler - Firma seçimi ve PDF yükleme için
+  const [selectedCompany, setSelectedCompany] = useState('');
+  const [isUploadingPDF, setIsUploadingPDF] = useState(false);
+  const [pdfFile, setPdfFile] = useState(null);
+  const [isPdfUploadSectionOpen, setIsPdfUploadSectionOpen] = useState(false);
   
   // RECIPIENT bilgilerini DELIVERY ADDRESS'e kopyalama için state
   const [copyRecipientToDelivery, setCopyRecipientToDelivery] = useState(false);
 
   // Yeni PDF generation hook'u
   const { isGenerating, progress, error: pdfError, generatePDF: generatePDFWithHook } = usePDFGeneration();
+
+  // packingItems state değişikliklerini monitor et
+  useEffect(() => {
+    if (packingItems.length > 0) {
+      packingItems.forEach((item, index) => {
+      });
+    }
+  }, [packingItems]);
+
+  // formData state değişikliklerini monitor et
 
   const handleInputChange = (name, value) => {
     setFormData(prev => ({
@@ -152,6 +179,10 @@ const PackingListForm = ({ selectedLanguage }) => {
 
   // Packing items verilerini güncelleme
   const handlePackingItemChange = (id, field, value) => {
+    // Input field değişikliklerini logla
+    if (field.includes('WEIGHT') || field.includes('QUANTITY')) {
+    }
+    
     setPackingItems(prev => prev.map(item => {
       if (item.id === id) {
         return { ...item, [field]: value };
@@ -287,7 +318,184 @@ const PackingListForm = ({ selectedLanguage }) => {
     }
   };
 
-  const handleSubmit = async (e) => {
+  // Backend bağlantı testi fonksiyonu
+  const testBackendConnection = async () => {
+    try {
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${apiUrl}/api/health`, {
+        method: 'GET',
+        timeout: 5000
+      });
+      return response.ok;
+    } catch (error) {
+      console.warn('Backend bağlantı testi başarısız:', error);
+      return false;
+    }
+  };
+
+
+  // Yeni PDF yükleme fonksiyonu - firma seçimiyle birlikte
+  const handlePDFUpload = async () => {
+    if (!selectedCompany) {
+      setError('Lütfen önce bir firma seçin.');
+      return;
+    }
+
+    if (!pdfFile) {
+      setError('Lütfen bir PDF dosyası seçin.');
+      return;
+    }
+
+    setIsUploadingPDF(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      // Backend bağlantısını test et
+      const isBackendConnected = await testBackendConnection();
+      if (!isBackendConnected) {
+        throw new Error('Backend servisiyle bağlantı kurulamıyor. Lütfen servisin çalıştığından emin olun.');
+      }
+
+      // FormData oluştur
+      const formDataUpload = new FormData();
+      formDataUpload.append('company', selectedCompany);
+      formDataUpload.append('file', pdfFile);
+
+      console.log(' PDF yükleme başlatılıyor:', {
+        company: selectedCompany,
+        fileName: pdfFile.name,
+        fileSize: `${(pdfFile.size / 1024).toFixed(1)} KB`
+      });
+
+      // Backend'e gönder
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${apiUrl}/api/upload`, {
+        method: 'POST',
+        body: formDataUpload
+      });
+
+      if (!response.ok) {
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          if (errorData.error) {
+            errorMessage += ` - ${errorData.error}`;
+          }
+          if (errorData.message) {
+            errorMessage += ` - ${errorData.message}`;
+          }
+          console.error('PDF upload error details:', errorData);
+        } catch (e) {
+          console.error('Could not parse error response:', e);
+        }
+        throw new Error(errorMessage);
+      }
+
+      // Backend'den gelen veriyi al
+      const result = await response.json();
+      
+      //  DETAYLI BACKEND RESPONSE DEBUG 
+      console.log(' ==================== PDF UPLOAD BACKEND RESPONSE ====================');
+      console.log(' Full Backend Response:', result);
+      console.log(' Response keys:', Object.keys(result || {}));
+
+
+      console.log(' ==================== END PDF UPLOAD RESPONSE ====================');
+
+      // Packing items verilerini güncelle - Esnek items detection
+      let itemsArray = null;
+      
+      // Farklı backend response formatlarında items'ı ara
+      if (result.items && Array.isArray(result.items) && result.items.length > 0) {
+        itemsArray = result.items;
+      } else if (result.data && result.data.items && Array.isArray(result.data.items)) {
+        itemsArray = result.data.items;
+      } else if (result.data && result.data.products && Array.isArray(result.data.products)) {
+        itemsArray = result.data.products;
+      } else if (result.products && Array.isArray(result.products)) {
+        itemsArray = result.products;
+      } else if (Array.isArray(result)) {
+        itemsArray = result;
+      }
+      
+      if (itemsArray && itemsArray.length > 0) {
+
+        
+        const mappedItems = itemsArray.map((item, index) => {
+          
+          const mappedItem = {
+            id: Date.now() + index,
+            // Backend'den gelen field'lar zaten doğru formatta - öncelik ver
+            'ARTICLE NUMBER / COMPOSITION / CUSTOMS CODE': 
+              item['ARTICLE NUMBER / COMPOSITION / CUSTOMS CODE'] || // Backend'den direkt gel
+              item['ARTICLE NUMBER'] || // Alternatif
+              item.articleNumber || 
+              item.article || 
+              '',
+            'FABRIC WEIGHT / WIDHT': item['FABRIC WEIGHT / WIDHT'] || item['FABRIC WEIGHT'] || item.fabricWeight || '',
+            'QUANTITY (METERS)': item['QUANTITY (METERS)'] || item['QUANTITY'] || item.quantity || '',
+            'ROLL NUMBER ROLL DIMENSIONS': item['ROLL NUMBER ROLL DIMENSIONS'] || item['ROLL NUMBER'] || item.rollNumber || '',
+            'LOT': item['LOT'] || item.lot || item.batch || '',
+            'GROSS WEIGHT(KG)': item['GROSS WEIGHT(KG)'] || item['GROSS WEIGHT (KG)'] || item['GROSS WEIGHT'] || item.grossWeight || '',
+            'NET WEIGHT (KG)': item['NET WEIGHT (KG)'] || item['NET WEIGHT'] || item.netWeight || ''
+          };
+          
+          return mappedItem;
+        });
+
+        console.log('Tüm mapped items:', mappedItems);
+        
+        setPackingItems(mappedItems);
+        
+        setIsOCRData(true);
+        
+        setSuccess(`PDF başarıyla işlendi!\n\n ${mappedItems.length} ürün eklendi\n Firma: ${selectedCompany}\n\n Lütfen verileri kontrol edip gerekirse düzenleyin.`);
+        
+      } else {
+
+        if (result.data) {
+        }
+        
+        setSuccess('PDF yüklendi ancak ürün bilgileri okunamadı. Lütfen verileri manuel olarak girin.');
+      }
+
+    } catch (error) {
+      console.error('PDF yükleme hatası:', error);
+      setError('PDF yüklenirken hata oluştu: ' + (error.message || error.toString()));
+    } finally {
+      setIsUploadingPDF(false);
+      // Dosya seçimini temizle
+      setPdfFile(null);
+      const fileInput = document.getElementById('pdf-file-input');
+      if (fileInput) fileInput.value = '';
+    }
+  };
+
+  // PDF dosyası seçme fonksiyonu
+  const handlePDFFileSelect = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      // Dosya türü kontrolü - sadece PDF kabul et
+      if (file.type !== 'application/pdf') {
+        setError('Lütfen sadece PDF dosyası seçin.');
+        event.target.value = '';
+        return;
+      }
+      
+      // Dosya boyutu kontrolü (10MB limit)
+      if (file.size > 10 * 1024 * 1024) {
+        setError('PDF dosyası 10MB\'dan küçük olmalıdır.');
+        event.target.value = '';
+        return;
+      }
+
+      setPdfFile(file);
+      setError('');
+    }
+  };
+
+    const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setSuccess('');
@@ -296,26 +504,31 @@ const PackingListForm = ({ selectedLanguage }) => {
       // Form data ve packing items verilerini birleştir
       const combinedData = {
         ...formData,
-        packingItems: packingItems
+        packingItems: packingItems,
+        docType: 'packing-list',
+        formType: 'packing-list'
       };
       
-      console.log('Gönderilen packing list data:', combinedData);
+      // Her zaman packing-list document type kullan
+      const documentType = 'packing-list';
+     
       
       // Yeni 3-aşamalı PDF generation kullan
-      const success = await generatePDFWithHook(combinedData, 'packing-list', selectedLanguage);
+      const success = await generatePDFWithHook(combinedData, documentType, selectedLanguage);
       
       if (success) {
         setSuccess('Packing List PDF başarıyla oluşturuldu ve indirildi!');
       }
     } catch (error) {
       console.error('PDF oluşturma hatası:', error);
-      setError('PDF oluşturulurken hata oluştu: ' + (error.message || error.toString()));
+      setError('PDF oluşturulırken hata oluştu: ' + (error.message || error.toString()));
     }
   };
 
   const handleReset = () => {
     setFormData({
       'INVOICE NUMBER': '',
+      'Invoice Date': '',
       'RESPONSIBLE PERSON': '',
       'TELEPHONE': '',
       'EMAIL': '',
@@ -357,6 +570,9 @@ const PackingListForm = ({ selectedLanguage }) => {
     // Manuel giriş durumunu da sıfırla
     setIsCustomEntry(false);
     
+    // OCR flag'ini de sıfırla
+    setIsOCRData(false);
+    
     setError('');
     setSuccess('');
   };
@@ -380,6 +596,46 @@ const PackingListForm = ({ selectedLanguage }) => {
       {progress && (
         <div className="progress-message">
           {progress}
+        </div>
+      )}
+
+      {/* OCR Data Status */}
+      {isOCRData && (
+        <div className="ocr-status-panel" style={{
+          background: 'linear-gradient(135deg, #e8f5e8, #f0f8ff)',
+          border: '2px solid #27ae60',
+          borderRadius: '8px',
+          padding: '15px',
+          margin: '20px 0',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          boxShadow: '0 2px 8px rgba(39, 174, 96, 0.15)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '20px' }}></span>
+            <div>
+              <strong style={{ color: '#27ae60', fontSize: '14px' }}>OCR Verileri Yüklendi</strong>
+              <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#666' }}>
+                Veriler otomatik eşleştirildi. Lütfen kontrol edip düzenleyin.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsOCRData(false)}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              fontSize: '16px',
+              cursor: 'pointer',
+              color: '#666',
+              padding: '5px'
+            }}
+            title="Bildirimi kapat"
+          >
+            ✕
+          </button>
         </div>
       )}
 
@@ -654,23 +910,6 @@ const PackingListForm = ({ selectedLanguage }) => {
         </div>
 
 
-        {/* Notes Section */}
-        <div className="form-section">
-          <h3 className="section-title">NOTLAR</h3>
-          <div className="form-grid">
-            <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-              <label className="form-label">Notlar</label>
-              <textarea
-                className="form-textarea"
-                value={formData['Notlar']}
-                onChange={(e) => handleInputChange('Notlar', e.target.value)}
-                placeholder="Buraya notlarınızı yazabilirsiniz..."
-                rows="6"
-              />
-            </div>
-          </div>
-        </div>
-
         {/* Payment & Shipping Details Section */}
         <div className="form-section">
           <h3 className="section-title">PAYMENT & SHIPPING DETAILS</h3>
@@ -726,6 +965,187 @@ const PackingListForm = ({ selectedLanguage }) => {
         <div className="form-section">
           <div className="goods-header">
             <h3 className="section-title">PACKING DETAILS</h3>
+          </div>
+
+          {/* Firma Seçimi ve PDF Yükleme Bölümü */}
+          <div className="pdf-upload-section" style={{
+            background: 'linear-gradient(135deg, #f8f9fa, #e9ecef)',
+            border: '2px dashed #6c757d',
+            borderRadius: '12px',
+            padding: '25px',
+            margin: '20px 0',
+            textAlign: 'center'
+          }}>
+            {/* Collapsible Header - Always Visible */}
+            <div 
+              onClick={() => setIsPdfUploadSectionOpen(!isPdfUploadSectionOpen)}
+              style={{ 
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: isPdfUploadSectionOpen ? '20px' : '0px',
+                padding: '10px',
+                borderRadius: '8px',
+                transition: 'all 0.3s ease',
+                backgroundColor: 'transparent'
+              }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(108, 117, 125, 0.1)'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+            >
+              <h4 style={{ 
+                color: '#495057', 
+                margin: 0,
+                fontSize: '16px',
+                fontWeight: '600'
+              }}>
+                Firma Seç ve PDF den Ürün Aktar
+              </h4>
+              <div style={{
+                fontSize: '18px',
+                color: '#6c757d',
+                transform: isPdfUploadSectionOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                transition: 'transform 0.3s ease'
+              }}>
+                ▼
+              </div>
+            </div>
+            
+            {/* Collapsible Content - Toggle Visibility */}
+            {isPdfUploadSectionOpen && (
+              <div style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                gap: '15px', 
+                alignItems: 'center',
+                maxWidth: '500px',
+                margin: '0 auto',
+                opacity: 1,
+                transform: 'translateY(0px)',
+                transition: 'all 0.3s ease'
+              }}>
+                {/* Firma Seçimi */}
+                <div style={{ width: '100%' }}>
+                  <label style={{ 
+                    display: 'block', 
+                    marginBottom: '8px', 
+                    fontWeight: '500',
+                    color: '#495057',
+                    fontSize: '14px'
+                  }}>
+                    Firma Seçin:
+                  </label>
+                  <select
+                    className="form-input"
+                    value={selectedCompany}
+                    onChange={(e) => setSelectedCompany(e.target.value)}
+                    style={{ width: '100%' }}
+                  >
+                    <option value="">-- Firma seçin --</option>
+                    {companies.map((company, index) => (
+                      <option key={index} value={company}>
+                        {company}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* PDF Dosyası Seçimi */}
+                <div style={{ width: '100%' }}>
+                  <label style={{ 
+                    display: 'block', 
+                    marginBottom: '8px', 
+                    fontWeight: '500',
+                    color: '#495057',
+                    fontSize: '14px'
+                  }}>
+                   PDF Dosyası:
+                  </label>
+                  <input
+                    type="file"
+                    id="pdf-file-input"
+                    accept=".pdf"
+                    onChange={handlePDFFileSelect}
+                    disabled={isUploadingPDF || isGenerating}
+                    style={{ 
+                      width: '100%',
+                      padding: '10px',
+                      border: '2px dashed #ced4da',
+                      borderRadius: '8px',
+                      backgroundColor: '#fff'
+                    }}
+                  />
+                  {pdfFile && (
+                    <small style={{ 
+                      display: 'block', 
+                      marginTop: '5px', 
+                      color: '#28a745',
+                      fontSize: '12px'
+                    }}>
+                      ✅ Seçilen dosya: {pdfFile.name}
+                    </small>
+                  )}
+                </div>
+
+                {/* Yükle Butonu */}
+                <button
+                  type="button"
+                  onClick={handlePDFUpload}
+                  disabled={!selectedCompany || !pdfFile || isUploadingPDF || isGenerating}
+                  style={{
+                    background: selectedCompany && pdfFile ? 'linear-gradient(135deg, #28a745, #20c997)' : '#6c757d',
+                    color: 'white',
+                    border: 'none',
+                    padding: '12px 30px',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: selectedCompany && pdfFile ? 'pointer' : 'not-allowed',
+                    transition: 'all 0.3s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                  }}
+                >
+                  {isUploadingPDF ? (
+                    <>
+                      <span className="spinner" style={{ 
+                        width: '16px', 
+                        height: '16px',
+                        borderWidth: '2px' 
+                      }}></span>
+                      Yükleniyor...
+                    </>
+                  ) : (
+                    <>
+                       PDF Yükle ve Aktar
+                    </>
+                  )}
+                </button>
+
+                <small style={{ 
+                  display: 'block', 
+                  marginTop: '15px', 
+                  color: '#6c757d',
+                  fontSize: '12px',
+                  fontStyle: 'italic'
+                }}>
+                  Firma seçin, PDF dosyanızı yükleyin ve otomatik veri çıkarma işlemini başlatın
+                </small>
+              </div>
+            )}
+          </div>
+
+          <div className="goods-header">
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              margin: '20px 0'
+            }}>
+              <h4 style={{ color: '#495057', margin: 0 }}> Ürün Listesi</h4>
+            </div>
             <div className="header-buttons">
               <button
                 type="button"
@@ -739,7 +1159,7 @@ const PackingListForm = ({ selectedLanguage }) => {
                     Etiketler Oluşturuluyor...
                   </>
                 ) : (
-                  <>📋 Etiket Oluştur</>
+                  <> Etiket Oluştur</>
                 )}
               </button>
               <button
@@ -770,11 +1190,11 @@ const PackingListForm = ({ selectedLanguage }) => {
               <div className="goods-container">
                 <div className="goods-grid-row">
                   <div className="form-group">
-                      <label className="form-label">
-                      ARTICLE NUMBER / COMPOSITION / CUSTOMS CODE{" "}
-                      <span style={{ color: 'red' }}>*-her bilgi arasında "/" işareti kullan!</span>
-                    </label>
-                      <textarea
+                  <label className="form-label">
+                  ARTICLE NUMBER / COMPOSITION / CUSTOMS CODE{" "}
+                 <span style={{ color: 'red' }}>*-her bilgi arasında "/" işareti kullan!</span>
+                  </label>
+                    <textarea
                       className="form-textarea"
                       value={item['ARTICLE NUMBER / COMPOSITION / CUSTOMS CODE']}
                       onChange={(e) => handlePackingItemChange(item.id, 'ARTICLE NUMBER / COMPOSITION / CUSTOMS CODE', e.target.value)}
@@ -837,10 +1257,15 @@ const PackingListForm = ({ selectedLanguage }) => {
                     <input
                       type="text"
                       className="form-input"
-                      value={item['GROSS WEIGHT(KG)']}
-                      onChange={(e) => handlePackingItemChange(item.id, 'GROSS WEIGHT(KG)', e.target.value)}
+                      value={item['GROSS WEIGHT(KG)'] || ''}
+                      onChange={(e) => {
+                        console.log(` GROSS WEIGHT onChange: "${e.target.value}" (input value)`);
+                        handlePackingItemChange(item.id, 'GROSS WEIGHT(KG)', e.target.value);
+                      }}
                       placeholder="Brüt ağırlık (kg)"
                       step="0.01"
+                      onFocus={() => {
+                      }}
                     />
                   </div>
                   
@@ -849,10 +1274,14 @@ const PackingListForm = ({ selectedLanguage }) => {
                     <input
                       type="text"
                       className="form-input"
-                      value={item['NET WEIGHT (KG)']}
-                      onChange={(e) => handlePackingItemChange(item.id, 'NET WEIGHT (KG)', e.target.value)}
+                      value={item['NET WEIGHT (KG)'] || ''}
+                      onChange={(e) => {
+                        handlePackingItemChange(item.id, 'NET WEIGHT (KG)', e.target.value);
+                      }}
                       placeholder="Net ağırlık (kg)"
                       step="0.01"
+                      onFocus={() => {
+                      }}
                     />
                   </div>
                 </div>

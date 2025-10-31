@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import './RecipientManager.css';
+import '../css/RecipientManager.css';
+
 
 const RecipientManager = ({ onRecipientSelect, selectedRecipient }) => {
   const [recipients, setRecipients] = useState([]);
@@ -24,11 +25,7 @@ const RecipientManager = ({ onRecipientSelect, selectedRecipient }) => {
   const fetchRecipients = React.useCallback(async () => {
     try {
       console.log('Recipients yükleniyor...'); // Debug log
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-      console.log('API URL:', apiUrl); // Debug log
-      const fullUrl = `${apiUrl}/api/recipients`;
-      console.log('Full URL:', fullUrl); // Debug log
-      const response = await fetch(fullUrl);
+      const response = await fetch('/api/recipients');
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -41,12 +38,7 @@ const RecipientManager = ({ onRecipientSelect, selectedRecipient }) => {
       const recipientsList = result.data || [];
       setRecipients(Array.isArray(recipientsList) ? recipientsList : []);
     } catch (error) {
-      console.error('Backend hatası:', error);
-      console.error('Error details:', {
-        message: error.message,
-        stack: error.stack,
-        name: error.name
-      });
+      console.error('Backend hatası:', error.message);
       setRecipients([]);
     }
   }, []);
@@ -61,8 +53,7 @@ const RecipientManager = ({ onRecipientSelect, selectedRecipient }) => {
     setIsLoading(true);
     try {
       console.log('Arama yapılıyor:', query); // Debug log
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-      const response = await fetch(`${apiUrl}/api/recipients/search?q=${encodeURIComponent(query)}`);
+      const response = await fetch(`/api/recipients/search?q=${encodeURIComponent(query)}`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -104,10 +95,9 @@ const RecipientManager = ({ onRecipientSelect, selectedRecipient }) => {
         email: formData.email.trim()
       };
 
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
       const url = editingRecipient 
-        ? `${apiUrl}/api/recipients/${editingRecipient.id}`
-        : `${apiUrl}/api/recipients`;
+        ? `/api/recipients/${editingRecipient.id}`
+        : '/api/recipients';
       
       const method = editingRecipient ? 'PUT' : 'POST';
 
@@ -146,8 +136,7 @@ const RecipientManager = ({ onRecipientSelect, selectedRecipient }) => {
   const deleteRecipient = async (id) => {
     if (window.confirm('Bu recipient silinsin mi?')) {
       try {
-        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-        const response = await fetch(`${apiUrl}/api/recipients/${id}`, {
+        const response = await fetch(`/api/recipients/${id}`, {
           method: 'DELETE'
         });
         

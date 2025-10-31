@@ -155,18 +155,12 @@ const OrderConfirmationForm = ({ selectedLanguage }) => {
   const handleGoodsChange = (id, field, value) => {
     setGoods(prev => prev.map(item => {
       if (item.id === id) {
-        // QUANTITY (METERS) ve PRICE alanlarında virgülü engelle
-        let processedValue = value;
-        if (field === 'QUANTITY (METERS)' || field === 'PRICE') {
-          processedValue = value.replace(/,/g, ''); // Virgülleri kaldır
-        }
-        
-        const updatedItem = { ...item, [field]: processedValue };
+        const updatedItem = { ...item, [field]: value };
         
         // QUANTITY veya PRICE değiştiğinde AMOUNT'u otomatik hesapla
         if (field === 'QUANTITY (METERS)' || field === 'PRICE') {
-          const quantity = parseFloat(field === 'QUANTITY (METERS)' ? processedValue : updatedItem['QUANTITY (METERS)']) || 0;
-          const price = parseFloat(field === 'PRICE' ? processedValue : updatedItem['PRICE']) || 0;
+          const quantity = parseFloat(field === 'QUANTITY (METERS)' ? value : updatedItem['QUANTITY (METERS)']) || 0;
+          const price = parseFloat(field === 'PRICE' ? value : updatedItem['PRICE']) || 0;
           
           // Miktar ve fiyat varsa çarpma işlemi yap
           if (quantity > 0 && price > 0) {

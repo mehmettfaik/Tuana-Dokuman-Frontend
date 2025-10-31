@@ -1,103 +1,195 @@
 import React, { useState } from 'react';
 import usePDFGeneration from '../hooks/usePDFGeneration';
-import '../css/FabricTechnicalForm.css';
+import RecipientManager from './RecipientManager';
+import '../css/HangersShipmentForm.css';
 
-const FabricTechnicalForm = ({ selectedLanguage }) => {
+const HangersShipmentForm = ({ selectedLanguage }) => {
+  // Sorumlu kişiler listesi
+  const responsiblePersons = {
+    'NURAN YELMEN': {
+      name: 'NURAN YELMEN',
+      telephone: '+90 530 285 71 71',
+      email: 'NURAN@TUANATEX.COM'
+    },
+    'CENK YELMEN': {
+      name: 'CENK YELMEN',
+      telephone: '+90 333 234 45 38', 
+      email: 'CENK@TUANATEX.COM'
+    }
+  };
+
   const [formData, setFormData] = useState({
-    'ARTICLE CODE': '',
-    'CUSTOM TARIFF CODE': '',
-    'COMPOSITION': '',
-    'WEAW TYPE': '',
-    'WEIGHT': '',
-    'WIDTH / CUTABLE WIDTH': '',
-    'CERTIFICATION': '',
-    'CONSTRUCTION': '',
-    'FINISH': '',
-    'COLOUR': '',
-    'JACQUARD PATTERN NAME': '',
-    'ORIGIN': '',
-    'SHRINKAGE IN WARP': '',
-    'SHRINKAGE IN WEFT': '',
-    'NOTE_1': '',
-    'NOTE_2': '',
-    'NOTE_3': '',
-    'ISSUED BY': '',
-    'RESPONSIBLE TECHNICIAN': '',
-    'CARE_INSTRUCTIONS': []
+    // Hangers Shipment specific fields
+    'TRACKING CODE': '',
+    'COURIER': '',
+    
+    // Responsible Person
+    'RESPONSIBLE PERSON': '',
+    'TELEPHONE': '',
+    'EMAIL': '',
+    
+    // Recipient
+    'RECIPIENT Şirket Adı': '',
+    'RECIPIENT Adres': '',
+    'RECIPIENT İlçe İl Ülke': '',
+    'RECIPIENT Vat': '',
+    'RECIPIENT Sorumlu Kişi': '',
+    'RECIPIENT Telefon': '',
+    'RECIPIENT Email': '',
+    
+    // Delivery Address
+    'DELIVERY ADDRESS Şirket Adı': '',
+    'DELIVERY ADDRESS Adres': '',
+    'DELIVERY ADDRESS İlçe İl Ülke': '',
+    'DELIVERY ADDRESS Vat': '',
+    'DELIVERY ADDRESS Sorumlu Kişi': '',
+    'DELIVERY ADDRESS Telefon': '',
+    'DELIVERY ADDRESS Email': '',
+    
+    // Notes
+    'NOTLAR': '',
+    
+    // Transport & Origin Details
+    'TRANSPORT TYPE': '',
+    'COUNTRY OF ORIGIN': '',
   });
+
+  // Hangers Items - Özel ürün listesi yapısı
+  const [hangersItems, setHangersItems] = useState([
+    {
+      id: 1,
+      'ARTICLE NUMBER': '',
+      'TYPE': '',
+      'COMPOSITION': '',
+      'HANGER DIMENSION': '',
+      'PIECES': '',
+      'HS (CUSTOMS) CODE': ''
+    }
+  ]);
+  // Kargo şirketi manuel giriş durumu
+const [isCustomCourier, setIsCustomCourier] = useState(false);
+
+// Değişim fonksiyonu
+const handleCourierChange = (value) => {
+  if (value === 'custom') {
+    setIsCustomCourier(true);
+    handleInputChange('COURIER', '');
+  } else {
+    setIsCustomCourier(false);
+    handleInputChange('COURIER', value);
+  }
+};
+
 
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [copyRecipientToDelivery, setCopyRecipientToDelivery] = useState(false);
 
   // Yeni PDF generation hook'u
   const { isGenerating, progress, error: pdfError, generatePDF: generatePDFWithHook } = usePDFGeneration();
 
-  // Yıkama talimatları fotoğrafları listesi
-  const careInstructionsList = [
-    { id: 'wash_30', name: '30°C Yıkama', image: '30-derece.jpeg' },
-    { id: 'wash_40', name: '40°C Yıkama', image: '40-derece.jpeg' },
-    { id: 'wash_50', name: '50°C Yıkama', image: '50-derece.jpeg' },
-    { id: 'wash_60', name: '60°C Yıkama', image: '60-derece.jpeg' },
-    { id: 'cold_wash', name: 'Soğuk Yıkama', image: 'cold-wash.jpeg' },
-    { id: 'hand_wash', name: 'El Yıkama', image: 'hand-wash.jpeg' },
-    { id: 'machine_wash', name: 'Makine Yıkama', image: 'machine-wash.jpeg' },
-    { id: 'delicate_wash', name: 'Narin Yıkama', image: 'delicate-wash.jpeg' },
-    // { id: 'narin_yikama', name: 'Narin Yıkama (TR)', image: 'narin-yıkama.jpeg' },
-    { id: 'wash_hot', name: 'Sıcak Yıkama', image: 'wash-hot.jpeg' },
-    { id: 'do_not_wash', name: 'Yıkama Yapılmaz', image: 'do-not-wash.jpeg' },
-    { id: 'normal', name: 'Normal Yıkama', image: 'normal.jpeg' },
-    { id: 'do_not_bleach', name: 'Ağartma Yapılmaz', image: 'do-not-bleach.jpeg' },
-    { id: 'p_bleach', name: 'P Ağartma', image: 'P.jpeg' },
-    { id: 'dry_low_heat', name: 'Düşük Isıda Kurutma', image: 'dry-low-heat.jpeg' },
-    { id: 'dry_medium_heat', name: 'Orta Isıda Kurutma', image: 'dry-medium-heat.jpeg' },
-    { id: 'do_not_tumble', name: 'Makine Kurutma Yapılmaz', image: 'do-not-tumble.jpeg' },
-    { id: 'dry_flat', name: 'Düz Kurutma', image: 'dry-flat.jpeg' },
-    { id: 'low_heat', name: 'Düşük Isı', image: 'low-heat.jpeg' },
-    { id: 'medium_heat', name: 'Orta Isı', image: 'medium-heat.jpeg' },
-    { id: 'high_heat', name: 'Yüksek Isı', image: 'high-heat.jpeg' },
-    // { id: 'low_iron', name: 'Düşük İsıda Ütüleme', image: 'low-iron.jpeg' },
-    { id: 'utu', name: 'Ütüleme', image: 'utu.jpeg' },
-    { id: 'buhar', name: 'Buhar', image: 'buhar.jpeg' },
-    { id: 'do_not_iron', name: 'Ütüleme Yapılmaz', image: 'do-not-iron.jpeg' },
-    { id: 'dry_clean', name: 'Kuru Temizleme', image: 'dry-clean.jpeg' },
-    { id: 'do_not_dry_clean', name: 'Kuru Temizleme Yapılmaz', image: 'do-not-dry-clean.jpeg' },
-    { id: 'any_solvent', name: 'Herhangi Çözücü', image: 'any-solvent.jpeg' },
-    { id: 'cleaning_pce_delicate', name: 'PCE Narin Temizleme', image: 'cleaning-PCE-delicate.jpeg' },
-    { id: 'cleaning_pce_very_delicate', name: 'PCE Çok Narin Temizleme', image: 'cleaning-PCE-very-delicate.jpeg' }
-  ];
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    console.log(`Input changed: ${name} = "${value}"`);
-    setFormData(prev => {
-      const updated = {
-        ...prev,
-        [name]: value
-      };
-      console.log('Updated form data:', updated);
-      return updated;
-    });
-    setError('');
+  const handleInputChange = (name, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
-  // Yıkama talimatları seçimi için fonksiyon
-  const handleCareInstructionToggle = (instructionId) => {
-    setFormData(prev => {
-      const currentInstructions = prev['CARE_INSTRUCTIONS'] || [];
-      const isSelected = currentInstructions.includes(instructionId);
-      
-      const updatedInstructions = isSelected
-        ? currentInstructions.filter(id => id !== instructionId)
-        : [...currentInstructions, instructionId];
-      
-      console.log('Updated care instructions:', updatedInstructions);
-      
-      return {
+  // Manuel giriş durumunu takip etmek için ayrı state
+  const [isCustomEntry, setIsCustomEntry] = useState(false);
+
+  // Sorumlu kişi seçimi değiştiğinde çalışan fonksiyon
+  const handleResponsiblePersonChange = (selectedPersonName) => {
+    const selectedPerson = responsiblePersons[selectedPersonName];
+    
+    if (selectedPerson) {
+      setIsCustomEntry(false);
+      setFormData(prev => ({
         ...prev,
-        'CARE_INSTRUCTIONS': updatedInstructions
-      };
-    });
-    setError('');
+        'RESPONSIBLE PERSON': selectedPerson.name,
+        'TELEPHONE': selectedPerson.telephone,
+        'EMAIL': selectedPerson.email
+      }));
+    } else if (selectedPersonName === 'custom') {
+      setIsCustomEntry(true);
+      setFormData(prev => ({
+        ...prev,
+        'RESPONSIBLE PERSON': '',
+        'TELEPHONE': '',
+        'EMAIL': ''
+      }));
+    } else {
+      setIsCustomEntry(false);
+      setFormData(prev => ({
+        ...prev,
+        'RESPONSIBLE PERSON': selectedPersonName,
+        'TELEPHONE': '',
+        'EMAIL': ''
+      }));
+    }
+  };
+
+  // Recipient seçildiğinde çalışan fonksiyon
+  const handleRecipientSelect = (recipient) => {
+    setFormData(prev => ({
+      ...prev,
+      'RECIPIENT Şirket Adı': recipient.companyName || '',
+      'RECIPIENT Adres': recipient.address || '',
+      'RECIPIENT İlçe İl Ülke': recipient.cityStateCountry || '',
+      'RECIPIENT Vat': recipient.vat || '',
+      'RECIPIENT Sorumlu Kişi': recipient.contactPerson || '',
+      'RECIPIENT Telefon': recipient.phone || '',
+      'RECIPIENT Email': recipient.email || ''
+    }));
+  };
+
+  // RECIPIENT bilgilerini DELIVERY ADDRESS'e kopyalama fonksiyonu
+  const handleCopyToDelivery = (isChecked) => {
+    setCopyRecipientToDelivery(isChecked);
+    
+    if (isChecked) {
+      setFormData(prev => ({
+        ...prev,
+        'DELIVERY ADDRESS Şirket Adı': prev['RECIPIENT Şirket Adı'],
+        'DELIVERY ADDRESS Adres': prev['RECIPIENT Adres'],
+        'DELIVERY ADDRESS İlçe İl Ülke': prev['RECIPIENT İlçe İl Ülke'],
+        'DELIVERY ADDRESS Vat': prev['RECIPIENT Vat'],
+        'DELIVERY ADDRESS Sorumlu Kişi': prev['RECIPIENT Sorumlu Kişi'],
+        'DELIVERY ADDRESS Telefon': prev['RECIPIENT Telefon'],
+        'DELIVERY ADDRESS Email': prev['RECIPIENT Email']
+      }));
+    }
+  };
+
+  // Hangers items verilerini güncelleme
+  const handleHangersItemChange = (id, field, value) => {
+    setHangersItems(prev => prev.map(item => {
+      if (item.id === id) {
+        return { ...item, [field]: value };
+      }
+      return item;
+    }));
+  };
+
+  // Yeni hangers item ekleme
+  const addHangersItem = () => {
+    const newId = Math.max(...hangersItems.map(item => item.id)) + 1;
+    setHangersItems(prev => [...prev, {
+      id: newId,
+      'ARTICLE NUMBER': '',
+      'TYPE': '',
+      'COMPOSITION': '',
+      'HANGER DIMENSION': '',
+      'PIECES': '',
+      'HS (CUSTOMS) CODE': ''
+    }]);
+  };
+
+  // Hangers item silme
+  const removeHangersItem = (id) => {
+    if (hangersItems.length > 1) {
+      setHangersItems(prev => prev.filter(item => item.id !== id));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -106,71 +198,87 @@ const FabricTechnicalForm = ({ selectedLanguage }) => {
     setSuccess('');
 
     try {
-      console.log('Sending fabric technical data to backend:', formData);
-      console.log('Notes specifically:', {
-        NOTE_1: formData['NOTE_1'],
-        NOTE_2: formData['NOTE_2'],
-        NOTE_3: formData['NOTE_3']
-      });
-
+      // Form data ve hangers items verilerini birleştir
+      const combinedData = {
+        ...formData,
+        hangersItems: hangersItems
+      };
+      
+      console.log('Gönderilen hangers shipment data:', combinedData);
+      
       // Yeni 3-aşamalı PDF generation kullan
-      const success = await generatePDFWithHook(formData, 'fabric-technical', selectedLanguage);
+      const success = await generatePDFWithHook(combinedData, 'hangers-shipment', selectedLanguage);
       
       if (success) {
-        setSuccess('Technical Sheet PDF başarıyla oluşturuldu ve indirildi!');
+        setSuccess('Hangers Shipment Details Sheet PDF başarıyla oluşturuldu ve indirildi!');
       }
     } catch (error) {
       console.error('PDF oluşturma hatası:', error);
-      setError(`PDF oluşturulamadı: ${error.message}`);
+      setError('PDF oluşturulurken hata oluştu: ' + (error.message || error.toString()));
     }
   };
 
   const handleReset = () => {
     setFormData({
-      'ARTICLE CODE': '',
-      'CUSTOM TARIFF CODE': '',
-      'COMPOSITION': '',
-      'WEAW TYPE': '',
-      'WEIGHT': '',
-      'WIDTH / CUTABLE WIDTH': '',
-      'CERTIFICATION': '',
-      'CONSTRUCTION': '',
-      'FINISH': '',
-      'COLOUR': '',
-      'JACQUARD PATTERN NAME': '',
-      'ORIGIN': '',
-      'SHRINKAGE IN WARP': '',
-      'SHRINKAGE IN WEFT': '',
-      'NOTE_1': '',
-      'NOTE_2': '',
-      'NOTE_3': '',
-      'ISSUED BY': '',
-      'RESPONSIBLE TECHNICIAN': '',
-      'CARE_INSTRUCTIONS': []
+      'TRACKING CODE': '',
+      'COURIER': '',
+      'RESPONSIBLE PERSON': '',
+      'TELEPHONE': '',
+      'EMAIL': '',
+      'RECIPIENT Şirket Adı': '',
+      'RECIPIENT Adres': '',
+      'RECIPIENT İlçe İl Ülke': '',
+      'RECIPIENT Vat': '',
+      'RECIPIENT Sorumlu Kişi': '',
+      'RECIPIENT Telefon': '',
+      'RECIPIENT Email': '',
+      'DELIVERY ADDRESS Şirket Adı': '',
+      'DELIVERY ADDRESS Adres': '',
+      'DELIVERY ADDRESS İlçe İl Ülke': '',
+      'DELIVERY ADDRESS Vat': '',
+      'DELIVERY ADDRESS Sorumlu Kişi': '',
+      'DELIVERY ADDRESS Telefon': '',
+      'DELIVERY ADDRESS Email': '',
+      'NOTLAR': '',
+      'TRANSPORT TYPE': '',
+      'COUNTRY OF ORIGIN': '',
     });
+    
+    // Hangers items listesini de sıfırla
+    setHangersItems([{
+      id: 1,
+      'ARTICLE NUMBER': '',
+      'TYPE': '',
+      'COMPOSITION': '',
+      'HANGER DIMENSION': '',
+      'PIECES': '',
+      'HS (CUSTOMS) CODE': ''
+    }]);
+    
+    // Checkbox'ı da sıfırla
+    setCopyRecipientToDelivery(false);
+    
+    // Manuel giriş durumunu da sıfırla
+    setIsCustomEntry(false);
+    
     setError('');
     setSuccess('');
   };
 
   return (
-    <div className="fabric-form-container">
-      <div className="fabric-form-header">
-        <h2>TECHNICAL SHEET</h2>
-        <p>KUMAŞ TEKNİK BİLGİ FORMUNU DOLDURUN</p>
+    <div className="proforma-form-container">
+      <div className="proforma-form-header">
+        <h2>HANGERS SHIPMENT DETAILS SHEET</h2>
+        <p>Askı gönderim detay bilgilerini doldurun</p>
       </div>
 
       {/* Error & Success Messages */}
       {(error || pdfError) && (
         <div className="alert alert-error">
-          <strong>Hata:</strong> {error || pdfError}
+          {error || pdfError}
         </div>
       )}
-
-      {success && (
-        <div className="alert alert-success">
-          <strong>Başarılı:</strong> {success}
-        </div>
-      )}
+      {success && <div className="alert alert-success">{success}</div>}
       
       {/* Progress Message */}
       {progress && (
@@ -179,237 +287,475 @@ const FabricTechnicalForm = ({ selectedLanguage }) => {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="fabric-form">
+      <form onSubmit={handleSubmit} className="proforma-form">
+        {/* Tracking & Courier Information Section */}
         <div className="form-section">
-          <h3 className="section-title">Teknik Bilgiler</h3>
+          <h3 className="section-title">TRACKING & COURIER INFORMATION</h3>
           <div className="form-grid">
-            {Object.keys(formData)
-              .filter(fieldName => !fieldName.startsWith('NOTE_') && fieldName !== 'CARE_INSTRUCTIONS')
-              .map((fieldName) => {
-                // ISSUED BY ve RESPONSIBLE TECHNICIAN alanlarını ayrı bölümde gösteriyoruz, burada gösterme
-                if (fieldName === 'ISSUED BY' || fieldName === 'RESPONSIBLE TECHNICIAN') {
-                  return null;
-                }
-                
-                return (
-                <div key={fieldName} className="form-group">
-                  <label htmlFor={fieldName} className="form-label">
-                    {fieldName}:
-                  </label>
+            <div className="form-group">
+              <label className="form-label">TRACKING CODE</label>
+              <input
+                type="text"
+                className="form-input"
+                value={formData['TRACKING CODE']}
+                onChange={(e) => handleInputChange('TRACKING CODE', e.target.value)}
+                placeholder="Takip kodu"
+                required
+              />
+            </div>
+            
 
-                  {fieldName === 'WEAW TYPE' ? (
-                    <select
-                      id={fieldName}
-                      name={fieldName}
-                      value={formData[fieldName]}
-                      onChange={handleInputChange}
-                      className="form-input"
-                      disabled={isGenerating}
-                    >
-                      <option value="">Seçiniz...</option>
-                      <option value="POPELINE">POPELINE</option>
-                      <option value="PLAIN WEAVE">PLAIN WEAVE</option>
-                      <option value="1X1 PLAIN">1X1 PLAIN</option>
-                      <option value="1X1 POPELINE">1X1 POPELINE</option>
-                      <option value="1X1 VUAL">1X1 VUAL</option>
-                      <option value="TWILL 2/1">TWILL 2/1</option>
-                      <option value="TWILL 2/1 S">TWILL 2/1 S</option>
-                      <option value="TWILL 2/2">TWILL 2/2</option>
-                      <option value="TWILL 3/1">TWILL 3/1</option>
-                      <option value="TWILL 3/1 S">TWILL 3/1 S</option>
-                      <option value="3/1 S DIAGONAL (DIMI)">3/1 S DIAGONAL</option>
-                      <option value="3/1 Z DIAGONAL (DIMI)">3/1 Z DIAGONAL</option>
-                      <option value="TWILL 4/1">TWILL 4/1</option>
-                      <option value="SATIN">SATIN</option>
-                      <option value="JACQUARD">JACQUARD</option>
-                      <option value="HERRINGBONE">HERRINGBONE</option>
-                      <option value="CREPE">CREPE</option>
-                      <option value="DOBBY">DOBBY</option>
-                      <option value="CANVAS">CANVAS</option>
-                      <option value="BULL">BULL</option>
-                      <option value="CHIFFON">CHIFFON</option>
-                    </select>
-                  ) : fieldName === 'FINISH' ? (
-                    <select
-                      id={fieldName}
-                      name={fieldName}
-                      value={formData[fieldName]}
-                      onChange={handleInputChange}
-                      className="form-input"
-                      disabled={isGenerating}
-                    >
-                      <option value="">Seçiniz...</option>
-                      <option value="PFD">PFD</option>
-                      <option value="DYED">DYED</option>
-                      <option value="PIECE DYED">PIECE DYED</option>
-                      <option value="REACTIVE DYED">REACTIVE DYED</option>
-                      <option value="ENZYMATIC FINISH">ENZYMATIC FINISH</option>
-                      <option value="COATED">COATED</option>
-                      <option value="AERO">AERO</option>
-                      <option value="NYLON TOUCH">NYLON TOUCH</option>
-                      <option value="ANTIBACTERIAL">ANTIBACTERIAL</option>
-                      <option value="SANFORIZATION">SANFORIZATION</option>
-                      <option value="WATER REPELLENT">WATER REPELLENT</option>
-                      <option value="WIND REPELLENT">WIND REPELLENT</option>
-                      <option value="BRUSHED">BRUSHED</option>
-                    </select>
-                  ) : fieldName === 'CERTIFICATION' ? (
-                    <select
-                      id={fieldName}
-                      name={fieldName}
-                      value={formData[fieldName]}
-                      onChange={handleInputChange}
-                      className="form-input"
-                      disabled={isGenerating}
-                    >
-                      <option value="">Seçiniz...</option>
-                      <option value="GOTS">GOTS</option>
-                      <option value="GRS">GRS</option>
-                      <option value="OCS">OCS</option>
-                      <option value="RCS">RCS</option>
-                      <option value="EUROPEAN FLAX">EUROPEAN FLAX</option>
-                      <option value="ECOVERO">ECOVERO</option>
-                      <option value="LENZING">LENZING</option>
-                    </select>
-                  ) : (
+    <div className="form-group">
+      <label className="form-label">COURIER</label>
+      <select
+        className="form-input"
+        value={isCustomCourier ? 'custom' : formData['COURIER']}
+        onChange={(e) => handleCourierChange(e.target.value)}
+        required
+      >
+        <option value="">Kargo şirketi seçin...</option>
+        <option value="FEDEX">FEDEX</option>
+        <option value="TNT">TNT</option>
+        <option value="UPS">UPS</option>
+        <option value="DHL">DHL</option>
+        <option value="PTS">PTS</option>
+        <option value="custom">Diğer (Manuel Giriş)</option>
+      </select>
+
+      {/* Manuel giriş sadece “Diğer” seçilince görünsün */}
+      {isCustomCourier && (
+        <input
+          type="text"
+          className="form-input"
+          style={{ marginTop: '10px' }}
+          placeholder="Kargo şirketi adını yazın..."
+          value={formData['COURIER']}
+          onChange={(e) => handleInputChange('COURIER', e.target.value)}
+        />
+      )}
+    </div>
+  </div>
+
+          </div>
+
+        {/* Responsible Person Section */}
+        <div className="form-section">
+          <h3 className="section-title">RESPONSIBLE PERSON</h3>
+          <div className="form-grid">
+            <div className="form-group">
+              <label className="form-label">RESPONSIBLE PERSON</label>
+              <select
+                className="form-input"
+                value={isCustomEntry ? 'custom' : formData['RESPONSIBLE PERSON']}
+                onChange={(e) => handleResponsiblePersonChange(e.target.value)}
+              >
+                <option value="">Sorumlu kişi seçin...</option>
+                {Object.keys(responsiblePersons).map(personName => (
+                  <option key={personName} value={personName}>
+                    {personName}
+                  </option>
+                ))}
+                <option value="custom">Diğer (Manuel Giriş)</option>
+              </select>
+              
+              {/* Manuel giriş için text input (sadece "Diğer" seçildiğinde göster) */}
+              {isCustomEntry && (
+                <input
+                  type="text"
+                  className="form-input"
+                  style={{ marginTop: '10px' }}
+                  placeholder="Sorumlu kişi adını yazın..."
+                  value={formData['RESPONSIBLE PERSON']}
+                  onChange={(e) => handleInputChange('RESPONSIBLE PERSON', e.target.value)}
+                />
+              )}
+            </div>
+            
+            <div className="form-group">
+              <label className="form-label">TELEPHONE</label>
+              <input
+                type="tel"
+                className="form-input"
+                value={formData['TELEPHONE']}
+                onChange={(e) => handleInputChange('TELEPHONE', e.target.value)}
+                placeholder="Telefon numarası"
+              />
+            </div>
+            
+            <div className="form-group">
+              <label className="form-label">EMAIL</label>
+              <input
+                type="email"
+                className="form-input"
+                value={formData['EMAIL']}
+                onChange={(e) => handleInputChange('EMAIL', e.target.value)}
+                placeholder="E-posta adresi"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Recipient Section */}
+        <div className="form-section">
+          <h3 className="section-title">RECIPIENT</h3>
+          
+          {/* Recipient Manager */}
+          <RecipientManager 
+            onRecipientSelect={handleRecipientSelect}
+            selectedRecipient={{
+              'RECIPIENT Şirket Adı': formData['RECIPIENT Şirket Adı'],
+              'RECIPIENT Adres': formData['RECIPIENT Adres'],
+              'RECIPIENT İlçe İl Ülke': formData['RECIPIENT İlçe İl Ülke'],
+              'RECIPIENT Vat': formData['RECIPIENT Vat'],
+              'RECIPIENT Sorumlu Kişi': formData['RECIPIENT Sorumlu Kişi'],
+              'RECIPIENT Telefon': formData['RECIPIENT Telefon'],
+              'RECIPIENT Email': formData['RECIPIENT Email']
+            }}
+          />
+          
+          <div className="form-grid">
+            <div className="form-group">
+              <label className="form-label">RECIPIENT Şirket Adı</label>
+              <input
+                type="text"
+                className="form-input"
+                value={formData['RECIPIENT Şirket Adı']}
+                onChange={(e) => handleInputChange('RECIPIENT Şirket Adı', e.target.value)}
+                placeholder="Alıcı şirket adı"
+              />
+            </div>
+            
+            <div className="form-group">
+              <label className="form-label">RECIPIENT Adres</label>
+              <textarea
+                className="form-textarea"
+                value={formData['RECIPIENT Adres']}
+                onChange={(e) => handleInputChange('RECIPIENT Adres', e.target.value)}
+                placeholder="Alıcı şirket adresi"
+                rows="3"
+              />
+            </div>
+            
+            <div className="form-group">
+              <label className="form-label">RECIPIENT İlçe İl Ülke</label>
+              <input
+                type="text"
+                className="form-input"
+                value={formData['RECIPIENT İlçe İl Ülke']}
+                onChange={(e) => handleInputChange('RECIPIENT İlçe İl Ülke', e.target.value)}
+                placeholder="İlçe, İl, Ülke"
+              />
+            </div>
+            
+            <div className="form-group">
+              <label className="form-label">RECIPIENT Vat</label>
+              <input
+                type="text"
+                className="form-input"
+                value={formData['RECIPIENT Vat']}
+                onChange={(e) => handleInputChange('RECIPIENT Vat', e.target.value)}
+                placeholder="Vergi numarası"
+              />
+            </div>
+            
+            <div className="form-group">
+              <label className="form-label">RECIPIENT Sorumlu Kişi</label>
+              <input
+                type="text"
+                className="form-input"
+                value={formData['RECIPIENT Sorumlu Kişi']}
+                onChange={(e) => handleInputChange('RECIPIENT Sorumlu Kişi', e.target.value)}
+                placeholder="Alıcı sorumlu kişi"
+              />
+            </div>
+            
+            <div className="form-group">
+              <label className="form-label">RECIPIENT Telefon</label>
+              <input
+                type="tel"
+                className="form-input"
+                value={formData['RECIPIENT Telefon']}
+                onChange={(e) => handleInputChange('RECIPIENT Telefon', e.target.value)}
+                placeholder="Alıcı telefon"
+              />
+            </div>
+            
+            <div className="form-group">
+              <label className="form-label">RECIPIENT Email</label>
+              <input
+                type="email"
+                className="form-input"
+                value={formData['RECIPIENT Email']}
+                onChange={(e) => handleInputChange('RECIPIENT Email', e.target.value)}
+                placeholder="Alıcı e-posta"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Delivery Address Section */}
+        <div className="form-section">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+            <h3 className="section-title">DELIVERY ADDRESS</h3>
+            <div className="checkbox-group">
+              <label className="checkbox-label" style={{ fontSize: '14px', color: '#666' }}>
+                <input
+                  type="checkbox"
+                  checked={copyRecipientToDelivery}
+                  onChange={(e) => handleCopyToDelivery(e.target.checked)}
+                />
+                <span className="checkmark"></span>
+                Alıcı bilgilerini teslimat adresine kopyala
+              </label>
+            </div>
+          </div>
+          <div className="form-grid">
+            <div className="form-group">
+              <label className="form-label">DELIVERY ADDRESS Şirket Adı</label>
+              <input
+                type="text"
+                className="form-input"
+                value={formData['DELIVERY ADDRESS Şirket Adı']}
+                onChange={(e) => handleInputChange('DELIVERY ADDRESS Şirket Adı', e.target.value)}
+                placeholder="Teslimat şirket adı"
+              />
+            </div>
+            
+            <div className="form-group">
+              <label className="form-label">DELIVERY ADDRESS Adres</label>
+              <textarea
+                className="form-textarea"
+                value={formData['DELIVERY ADDRESS Adres']}
+                onChange={(e) => handleInputChange('DELIVERY ADDRESS Adres', e.target.value)}
+                placeholder="Teslimat adresi"
+                rows="3"
+              />
+            </div>
+            
+            <div className="form-group">
+              <label className="form-label">DELIVERY ADDRESS İlçe İl Ülke</label>
+              <input
+                type="text"
+                className="form-input"
+                value={formData['DELIVERY ADDRESS İlçe İl Ülke']}
+                onChange={(e) => handleInputChange('DELIVERY ADDRESS İlçe İl Ülke', e.target.value)}
+                placeholder="İlçe, İl, Ülke"
+              />
+            </div>
+            
+            <div className="form-group">
+              <label className="form-label">DELIVERY ADDRESS Vat</label>
+              <input
+                type="text"
+                className="form-input"
+                value={formData['DELIVERY ADDRESS Vat']}
+                onChange={(e) => handleInputChange('DELIVERY ADDRESS Vat', e.target.value)}
+                placeholder="Teslimat vergi numarası"
+              />
+            </div>
+            
+            <div className="form-group">
+              <label className="form-label">DELIVERY ADDRESS Sorumlu Kişi</label>
+              <input
+                type="text"
+                className="form-input"
+                value={formData['DELIVERY ADDRESS Sorumlu Kişi']}
+                onChange={(e) => handleInputChange('DELIVERY ADDRESS Sorumlu Kişi', e.target.value)}
+                placeholder="Teslimat sorumlu kişi"
+              />
+            </div>
+            
+            <div className="form-group">
+              <label className="form-label">DELIVERY ADDRESS Telefon</label>
+              <input
+                type="tel"
+                className="form-input"
+                value={formData['DELIVERY ADDRESS Telefon']}
+                onChange={(e) => handleInputChange('DELIVERY ADDRESS Telefon', e.target.value)}
+                placeholder="Teslimat telefon"
+              />
+            </div>
+            
+            <div className="form-group">
+              <label className="form-label">DELIVERY ADDRESS Email</label>
+              <input
+                type="email"
+                className="form-input"
+                value={formData['DELIVERY ADDRESS Email']}
+                onChange={(e) => handleInputChange('DELIVERY ADDRESS Email', e.target.value)}
+                placeholder="Teslimat e-posta"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Notes Section */}
+        <div className="form-section">
+          <h3 className="section-title">NOTLAR</h3>
+          <div className="form-grid">
+            <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+              <label className="form-label">Notlar</label>
+              <textarea
+                className="form-textarea"
+                value={formData['NOTLAR']}
+                onChange={(e) => handleInputChange('NOTLAR', e.target.value)}
+                placeholder="Buraya notlarınızı yazabilirsiniz..."
+                rows="6"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Transport & Origin Details Section */}
+        <div className="form-section">
+          <h3 className="section-title">TRANSPORT & ORIGIN DETAILS</h3>
+          <div className="form-grid">
+            <div className="form-group">
+              <label className="form-label">TRANSPORT TYPE</label>
+              <select
+                className="form-input"
+                value={formData['TRANSPORT TYPE']}
+                onChange={(e) => handleInputChange('TRANSPORT TYPE', e.target.value)}
+              >
+                <option value="">Taşıma türü seçin</option>
+                <option value="CIF">CIF</option>
+                <option value="FOB">FOB</option>
+                <option value="EXW">EXW</option>
+                <option value="DAP">DAP</option>
+                <option value="DDP">DDP</option>
+                <option value="FCA">FCA</option>
+              </select>
+            </div>
+            
+            <div className="form-group">
+              <label className="form-label">COUNTRY OF ORIGIN</label>
+              <input
+                type="text"
+                className="form-input"
+                value={formData['COUNTRY OF ORIGIN']}
+                onChange={(e) => handleInputChange('COUNTRY OF ORIGIN', e.target.value)}
+                placeholder="Menşei ülke"
+              />
+            </div>
+          </div>
+        </div>
+           {/* Hangers Items Section */}
+        <div className="form-section">
+          <div className="goods-header">
+            <h3 className="section-title">HANGERS DETAILS</h3>
+            <button
+              type="button"
+              className="btn btn-add-goods"
+              onClick={addHangersItem}
+            >
+              + Yeni Ürün Ekle
+            </button>
+          </div>
+          
+          {hangersItems.map((item, index) => (
+            <div key={item.id} className="goods-item">
+              <div className="goods-item-header">
+                <h4 className="goods-item-title">Ürün #{index + 1}</h4>
+                {hangersItems.length > 1 && (
+                  <button
+                    type="button"
+                    className="btn btn-remove-goods"
+                    onClick={() => removeHangersItem(item.id)}
+                  >
+                    × Sil
+                  </button>
+                )}
+              </div>
+              
+              <div className="goods-container">
+                <div className="goods-grid-row">
+                  <div className="form-group">
+                    <label className="form-label">ARTICLE NUMBER</label>
                     <input
                       type="text"
-                      id={fieldName}
-                      name={fieldName}
-                      value={formData[fieldName]}
-                      onChange={handleInputChange}
                       className="form-input"
-                      placeholder={`${fieldName} giriniz...`}
-                      disabled={isGenerating}
+                      value={item['ARTICLE NUMBER']}
+                      onChange={(e) => handleHangersItemChange(item.id, 'ARTICLE NUMBER', e.target.value)}
+                      placeholder="Artikel numarası"
                     />
-                  )}
-                </div>
-                );
-              })}
-          </div>
-        </div>
-
-        <div className="form-section">
-          <h3 className="section-title">Notlar (İsteğe Bağlı)</h3>
-          <div className="notes-grid">
-            {['NOTE_1', 'NOTE_2', 'NOTE_3'].map((noteField, index) => (
-              <div key={noteField} className="form-group">
-                <label htmlFor={noteField} className="form-label">
-                  {index + 1}. Not:
-                </label>
-                <textarea
-                  id={noteField}
-                  name={noteField}
-                  value={formData[noteField]}
-                  onChange={handleInputChange}
-                  className="form-textarea"
-                  placeholder={`${index + 1}. notu giriniz... (opsiyonel)`}
-                  disabled={isGenerating}
-                  rows="3"
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="form-section">
-          <h3 className="section-title">Yıkama Talimatları</h3>
-          <p className="section-description">PDF'de görünmesini istediğiniz yıkama talimatları sembollerini seçin:</p>
-          <div className="care-instructions-grid">
-            {careInstructionsList.map((instruction) => (
-              <div key={instruction.id} className="care-instruction-item">
-                <label className="care-instruction-label">
-                  <input
-                    type="checkbox"
-                    checked={formData['CARE_INSTRUCTIONS'].includes(instruction.id)}
-                    onChange={() => handleCareInstructionToggle(instruction.id)}
-                    className="care-instruction-checkbox"
-                    disabled={isGenerating}
-                  />
-                  <div className="care-instruction-content">
-                    <div className="care-instruction-icon">
-                      <img 
-                        src={require(`../care-instructions/${instruction.image}`)}
-                        alt={instruction.name}
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                          e.target.nextSibling.style.display = 'block';
-                        }}
-                      />
-                      <div className="care-instruction-fallback" style={{display: 'none'}}>
-                        📋
-                      </div>
-                    </div>
-                    <span className="care-instruction-name">{instruction.name}</span>
                   </div>
-                </label>
-              </div>
-            ))}
-          </div>
-          {formData['CARE_INSTRUCTIONS'].length > 0 && (
-            <div className="selected-instructions">
-              <h4>Seçilen Talimatlar ({formData['CARE_INSTRUCTIONS'].length}):</h4>
-              <div className="selected-instructions-list">
-                {formData['CARE_INSTRUCTIONS'].map(id => {
-                  const instruction = careInstructionsList.find(item => item.id === id);
-                  return instruction ? (
-                    <span key={id} className="selected-instruction-tag">
-                      {instruction.name}
-                    </span>
-                  ) : null;
-                })}
-              </div>
-            </div>
-          )}
-        </div>
+                  
+                 <div className="form-group">
+         <label className="form-label">TYPE</label>
+       <select
+      className="form-input"
+      value={item['TYPE']}
+      onChange={(e) => handleHangersItemChange(item.id, 'TYPE', e.target.value)}
+       >
+      <option value="">Seçiniz</option>
+       <option value="KNIT">KNIT</option>
+       <option value="WOVEN">WOVEN</option>
+     </select>
+      </div>
 
-        <div className="form-section">
-          <h3 className="section-title">İmza Bilgileri</h3>
-          <div className="form-grid">
-            <div className="form-group">
-              <label htmlFor="ISSUED BY" className="form-label">
-                ISSUED BY:
-              </label>
-              <input
-                type="text"
-                id="ISSUED BY"
-                name="ISSUED BY"
-                value={formData['ISSUED BY']}
-                onChange={handleInputChange}
-                className="form-input"
-                placeholder="İmzalayan kişi giriniz..."
-                disabled={isGenerating}
-              />
+                  
+                  <div className="form-group">
+                    <label className="form-label">COMPOSITION</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={item['COMPOSITION']}
+                      onChange={(e) => handleHangersItemChange(item.id, 'COMPOSITION', e.target.value)}
+                      placeholder="Kompozisyon"
+                    />
+                  </div>
+                </div>
+                
+                <div className="goods-grid-row">
+                  <div className="form-group">
+                    <label className="form-label">HANGER DIMENSION</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={item['HANGER DIMENSION']}
+                      onChange={(e) => handleHangersItemChange(item.id, 'HANGER DIMENSION', e.target.value)}
+                      placeholder="Askı ölçüleri"
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label className="form-label">PIECES</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={item['PIECES']}
+                      onChange={(e) => handleHangersItemChange(item.id, 'PIECES', e.target.value)}
+                      placeholder="Adet"
+                      min="0"
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label className="form-label">HS (CUSTOMS) CODE</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={item['HS (CUSTOMS) CODE']}
+                      onChange={(e) => handleHangersItemChange(item.id, 'HS (CUSTOMS) CODE', e.target.value)}
+                      placeholder="Gümrük kodu"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
-
-            <div className="form-group">
-              <label htmlFor="RESPONSIBLE TECHNICIAN" className="form-label">
-                RESPONSIBLE TECHNICIAN:
-              </label>
-              <input
-                type="text"
-                id="RESPONSIBLE TECHNICIAN"
-                name="RESPONSIBLE TECHNICIAN"
-                value={formData['RESPONSIBLE TECHNICIAN']}
-                onChange={handleInputChange}
-                className="form-input"
-                placeholder="Sorumlu teknisyen giriniz..."
-                disabled={isGenerating}
-              />
-            </div>
-          </div>
+          ))}
         </div>
 
         <div className="form-actions">
           <button
             type="button"
-            onClick={handleReset}
             className="btn btn-secondary"
+            onClick={handleReset}
             disabled={isGenerating}
           >
             Temizle
           </button>
-
+          
           <button
             type="submit"
             className="btn btn-primary"
@@ -437,4 +783,4 @@ const FabricTechnicalForm = ({ selectedLanguage }) => {
   );
 };
 
-export default FabricTechnicalForm;
+export default HangersShipmentForm;

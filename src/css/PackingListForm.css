@@ -21,6 +21,44 @@
   background-color: #218838;
 }
 
+/* File upload button styles */
+.file-upload-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.file-upload-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.btn-upload {
+  background-color: #6f42c1;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  text-decoration: none;
+}
+
+.btn-upload:hover {
+  background-color: #5a359a;
+}
+
+.btn-upload.disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 /* New create label button style */
 .btn-create-label {
   background-color: #007bff;
