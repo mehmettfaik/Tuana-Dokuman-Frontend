@@ -368,27 +368,73 @@ const PackingListForm = ({ selectedLanguage }) => {
         fileSize: `${(pdfFile.size / 1024).toFixed(1)} KB`
       });
 
-      // Backend'e gönder
+      // Backend'e gönder - Farklı endpoint'leri dene
       const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-      const response = await fetch(`${apiUrl}/api/upload`, {
-        method: 'POST',
-        body: formDataUpload
-      });
-
-      if (!response.ok) {
-        let errorMessage = `HTTP error! status: ${response.status}`;
+      
+      // Muhtemel OCR endpoint'leri
+      const possibleEndpoints = [
+        `${apiUrl}/api/pdf/ocr-upload`,
+        `${apiUrl}/api/ocr/upload`, 
+        `${apiUrl}/api/pdf/upload`,
+        `${apiUrl}/api/upload`,
+        `${apiUrl}/api/pdf/ocr`
+      ];
+      
+      let response = null;
+      let lastError = null;
+      
+      // Her endpoint'i sırayla dene
+      for (const endpoint of possibleEndpoints) {
         try {
-          const errorData = await response.json();
-          if (errorData.error) {
-            errorMessage += ` - ${errorData.error}`;
+          console.log('OCR Upload deneniyor:', endpoint);
+          response = await fetch(endpoint, {
+            method: 'POST',
+            body: formDataUpload
+          });
+          
+          if (response.ok) {
+            console.log('Başarılı endpoint bulundu:', endpoint);
+            break; // Başarılı olursa döngüden çık
+          } else {
+            console.log(`Endpoint başarısız (${response.status}):`, endpoint);
           }
-          if (errorData.message) {
-            errorMessage += ` - ${errorData.message}`;
-          }
-          console.error('PDF upload error details:', errorData);
-        } catch (e) {
-          console.error('Could not parse error response:', e);
+        } catch (error) {
+          console.log('Endpoint hatası:', endpoint, error.message);
+          lastError = error;
         }
+      }
+
+      if (!response || !response.ok) {
+        let errorMessage = 'PDF OCR servisi bulunamadı. ';
+        
+        if (response) {
+          errorMessage = `HTTP error! status: ${response.status}`;
+          try {
+            const errorData = await response.json();
+            if (errorData.error) {
+              errorMessage += ` - ${errorData.error}`;
+            }
+            if (errorData.message) {
+              errorMessage += ` - ${errorData.message}`;
+            }
+            console.error('PDF upload error details:', errorData);
+          } catch (e) {
+            console.error('Could not parse error response:', e);
+          }
+        } else {
+          errorMessage += 'Tüm OCR endpoint\'leri başarısız oldu.';
+          if (lastError) {
+            errorMessage += ` Son hata: ${lastError.message}`;
+          }
+        }
+        
+        // Backend geliştiriciye yardımcı bilgi
+        console.error('==== OCR ENDPOINT DEBUG ====');
+        console.error('Denenen endpoint\'ler:', possibleEndpoints);
+        console.error('Backend\'de şu endpoint\'lerden birinin mevcut olması gerekiyor:');
+        possibleEndpoints.forEach((ep, i) => console.error(`${i+1}. ${ep}`));
+        console.error('============================');
+        
         throw new Error(errorMessage);
       }
 
