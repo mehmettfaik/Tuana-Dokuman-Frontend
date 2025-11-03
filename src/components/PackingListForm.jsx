@@ -370,14 +370,8 @@ const PackingListForm = ({ selectedLanguage }) => {
 
       // Backend'e gönder
       const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-      const uploadUrl = `${apiUrl}/api/pdf/upload`;
-      console.log('OCR Upload URL:', uploadUrl);
-      
-      const response = await fetch(uploadUrl, {
+      const response = await fetch(`${apiUrl}/api/upload`, {
         method: 'POST',
-        headers: {
-          'X-API-Key': 'your-api-key' // Content-Type eklenmedi, multipart için
-        },
         body: formDataUpload
       });
 
