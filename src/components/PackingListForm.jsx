@@ -375,6 +375,9 @@ const PackingListForm = ({ selectedLanguage }) => {
       
       const response = await fetch(uploadUrl, {
         method: 'POST',
+        headers: {
+          'X-API-Key': 'your-api-key' // Content-Type eklenmedi, multipart için
+        },
         body: formDataUpload
       });
 
