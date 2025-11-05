@@ -14,7 +14,7 @@ const ProformaInvoiceForm = ({ selectedLanguage }) => {
     },
     'CENK YELMEN': {
       name: 'CENK YELMEN',
-      telephone: '+90 333 234 45 38', 
+      telephone: '+39 333 289 46 99', 
       email: 'CENK@TUANATEX.COM'
     }
   };
