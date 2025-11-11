@@ -1,21 +1,43 @@
 // services/pdfService.js
+import { auth } from '../firebase/config';
+
 class PDFService {
   constructor() {
     this.baseURL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+  }
+
+  // Helper to get current user's ID token (if logged in)
+  async getAuthToken() {
+    try {
+      const user = auth.currentUser;
+      if (user) {
+        const token = await user.getIdToken();
+        return token;
+      }
+      return null;
+    } catch (error) {
+      console.warn('Could not get auth token:', error);
+      return null;
+    }
   }
 
   // Backend bağlantısını test et
   async testConnection() {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 saniye timeout
+      const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 saniye timeout
+      
+      // Health check için token opsiyonel (public endpoint olabilir)
+      const token = await this.getAuthToken();
+      const headers = {
+        'Content-Type': 'application/json',
+      };
+      if (token) headers.Authorization = `Bearer ${token}`;
       
       const response = await fetch(`${this.baseURL}/api/health`, {
         method: 'GET',
         mode: 'cors',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         signal: controller.signal
       });
       
@@ -42,13 +64,19 @@ class PDFService {
   // 1. PDF üretimini başlat
   async startPDFGeneration(docType, formData, language = 'en') {
     try {
-      console.log(`Starting PDF generation for docType: ${docType}, language: ${language}`);
+      const token = await this.getAuthToken();
+      if (!token) {
+        throw new Error('Authentication token gerekli');
+      }
+      const headers = {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      };
+
       const response = await fetch(`${this.baseURL}/api/pdf/start`, {
         method: 'POST',
         mode: 'cors',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify({
           docType,
           formData,
@@ -92,8 +120,16 @@ class PDFService {
   // 2. PDF durumunu kontrol et
   async checkPDFStatus(jobId) {
     try {
-      console.log(`Checking PDF status for job: ${jobId}`);
-      const response = await fetch(`${this.baseURL}/api/pdf/status/${jobId}`);
+      const token = await this.getAuthToken();
+      if (!token) {
+        throw new Error('Authentication token gerekli');
+      }
+
+      const response = await fetch(`${this.baseURL}/api/pdf/status/${jobId}`, {
+        method: 'GET',
+        headers: { Authorization: `Bearer ${token}` },
+        mode: 'cors'
+      });
       
       if (!response.ok) {
         let errorMessage = `HTTP error! status: ${response.status}`;
@@ -118,10 +154,8 @@ class PDFService {
       }
 
       const statusData = await response.json();
-      console.log('PDF status response:', statusData);
       return statusData;
     } catch (error) {
-      console.error('Error checking PDF status for job:', jobId, error);
       throw error;
     }
   }
@@ -129,7 +163,16 @@ class PDFService {
   // 3. PDF'i indir
   async downloadPDF(jobId, fileName = 'document.pdf') {
     try {
-      const response = await fetch(`${this.baseURL}/api/pdf/download/${jobId}`);
+      const token = await this.getAuthToken();
+      if (!token) {
+        throw new Error('Authentication token gerekli');
+      }
+
+      const response = await fetch(`${this.baseURL}/api/pdf/download/${jobId}`, {
+        method: 'GET',
+        headers: { Authorization: `Bearer ${token}` },
+        mode: 'cors'
+      });
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -164,12 +207,10 @@ class PDFService {
   async waitForPDFCompletion(jobId, onProgress = null, timeout = 60000) {
     const startTime = Date.now();
     const pollInterval = 1000; // 1 saniye
-    let pollCount = 0;
 
     return new Promise((resolve, reject) => {
       const poll = async () => {
         try {
-          pollCount++;
           const elapsed = Date.now() - startTime;
           
           if (elapsed > timeout) {
@@ -178,7 +219,6 @@ class PDFService {
             return;
           }
 
-          console.log(`Polling PDF status (attempt ${pollCount}) for job: ${jobId}`);
           const status = await this.checkPDFStatus(jobId);
           
           // Progress callback'i varsa çağır
@@ -187,7 +227,6 @@ class PDFService {
           }
 
           if (status.status === 'completed') {
-            console.log(`PDF generation completed for job: ${jobId}`);
             resolve(status);
           } else if (status.status === 'failed') {
             console.error(`PDF generation failed for job: ${jobId}`, status);
@@ -204,11 +243,9 @@ class PDFService {
             reject(new Error(detailedError));
           } else {
             // Hala pending/processing, tekrar kontrol et
-            console.log(`PDF status: ${status.status} for job: ${jobId}, retrying in ${pollInterval}ms`);
             setTimeout(poll, pollInterval);
           }
         } catch (error) {
-          console.error(`Error during PDF status polling for job: ${jobId}`, error);
           reject(error);
         }
       };
@@ -305,7 +342,6 @@ class PDFService {
   // Ana PDF üretim fonksiyonu - Production için
   async generatePDFWithFallback(formData, docType, language = 'en') {
     try {
-      console.log('Starting PDF generation with backend API');
       
       // Backend durumunu kontrol et
       const isConnected = await this.testConnection();

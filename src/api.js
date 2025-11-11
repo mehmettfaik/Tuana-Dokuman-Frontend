@@ -1,5 +1,6 @@
 // src/api.js
 import axios from 'axios';
+import { auth } from './firebase/config';
 
 const api = axios.create({
   baseURL: process.env.REACT_APP_API_URL,
@@ -8,6 +9,54 @@ const api = axios.create({
     'Accept': 'application/json',
   }
 });
+
+// Request interceptor - Her istekte authentication token ekle
+api.interceptors.request.use(
+  async (config) => {
+    try {
+      const user = auth.currentUser;
+      if (user) {
+        const token = await user.getIdToken();
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    } catch (error) {
+      console.error('Token alınamadı:', error);
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor - Token expire durumunu handle et
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Token expire olduysa yenile ve tekrar dene
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      try {
+        const user = auth.currentUser;
+        if (user) {
+          console.log('🔄 Token yenileniyor...');
+          const token = await user.getIdToken(true); // Force refresh
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+          return api(originalRequest);
+        }
+      } catch (refreshError) {
+        console.error('❌ Token refresh başarısız:', refreshError);
+        // Kullanıcı otomatik olarak logout olacak (AuthContext'te handle ediliyor)
+        return Promise.reject(refreshError);
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
 
 export const generatePDF = async (formData, formType = 'fabric-technical', language = 'turkish') => {
   try {
@@ -56,11 +105,6 @@ export const generatePDF = async (formData, formType = 'fabric-technical', langu
       throw new Error('No data received from server');
     }
     
-    // PDF blob'unu doğrula
-    console.log('Response content type:', res.headers['content-type']);
-    console.log('Response data type:', res.data.type);
-    console.log('Response data size:', res.data.size);
-    
     if (res.data.size === 0) {
       throw new Error('Received empty file from server');
     }
@@ -98,6 +142,85 @@ export const generatePDF = async (formData, formType = 'fabric-technical', langu
       // İstek oluşturulurken hata oluştu
       throw new Error(`Request failed: ${error.message}`);
     }
+  }
+};
+
+// ============================================
+// FORM KAYIT YÖNETİMİ API FONKSİYONLARI
+// ============================================
+
+/**
+ * Yeni form kaydı oluşturur
+ * @param {Object} formData - Form verileri (formData, goods, totals içerebilir)
+ * @param {string} formType - Form tipi (örn: 'siparis', 'proforma-invoice')
+ * @returns {Promise} - Kaydedilen form verisi
+ */
+export const createFormRecord = async (formData, formType) => {
+  try {
+    // formData objesi içinde goods, packingItems veya totals olabilir, onları ayrıştır
+    const { goods, packingItems, totals, ...actualFormData } = formData;
+    
+    const payload = {
+      formData: actualFormData,
+      goods: goods || [],
+      packingItems: packingItems || [],
+      totals: totals || null,
+      formType,
+      createdAt: new Date().toISOString()
+    };
+    
+    const response = await api.post('/api/forms', payload);
+  
+    return response.data;
+  } catch (error) {
+    console.error('Form kaydı oluşturulurken hata:', error);
+    throw error;
+  }
+};
+
+/**
+ * Tüm form kayıtlarını listeler
+ * @param {string} formType - (Opsiyonel) Filtrelemek için form tipi
+ * @returns {Promise} - Form kayıtları listesi
+ */
+export const getFormRecords = async (formType = null) => {
+  try {
+    const url = formType ? `/api/forms?formType=${formType}` : '/api/forms';
+    const response = await api.get(url);
+    return response.data;
+  } catch (error) {
+    console.error('Form kayıtları alınırken hata:', error);
+    throw error;
+  }
+};
+
+/**
+ * Belirli bir form kaydını getirir
+ * @param {string} formId - Form ID
+ * @returns {Promise} - Form verisi
+ */
+export const getFormRecord = async (formId) => {
+  try {
+    const response = await api.get(`/api/forms/${formId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Form kaydı alınırken hata:', error);
+    throw error;
+  }
+};
+
+/**
+ * Belirli bir form kaydını siler
+ * @param {string} formId - Form ID
+ * @returns {Promise}
+ */
+export const deleteFormRecord = async (formId) => {
+  try {
+    const response = await api.delete(`/api/forms/${formId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Form kaydı silinirken hata:', error);
+    throw error;
   }
 };
 

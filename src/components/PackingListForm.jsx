@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import usePDFGeneration from '../hooks/usePDFGeneration';
 import RecipientManager from './RecipientManager';
+import { createFormRecord, getFormRecords, getFormRecord, deleteFormRecord } from '../api';
+import { auth } from '../firebase/config';
 import '../css/PackingListForm.css';
 
 const PackingListForm = ({ selectedLanguage }) => {
@@ -92,6 +94,94 @@ const PackingListForm = ({ selectedLanguage }) => {
 
   // Yeni PDF generation hook'u
   const { isGenerating, progress, error: pdfError, generatePDF: generatePDFWithHook } = usePDFGeneration();
+
+  // Geçmiş belgeler için state'ler
+  const [savedForms, setSavedForms] = useState([]);
+  const [loadingForms, setLoadingForms] = useState(false);
+  const [selectedFormId, setSelectedFormId] = useState(null);
+  const [formsError, setFormsError] = useState('');
+
+  // Sayfa yüklendiğinde geçmiş belgeleri yükle
+  useEffect(() => {
+    loadSavedForms();
+  }, []);
+
+  // Geçmiş belgeleri yükleme fonksiyonu
+  const loadSavedForms = async () => {
+    setLoadingForms(true);
+    setFormsError('');
+    try {
+      const forms = await getFormRecords('packing-list');
+      setSavedForms(forms || []);
+    } catch (error) {
+      setSavedForms([]);
+    } finally {
+      setLoadingForms(false);
+    }
+  };
+
+  // Belge seçme ve form alanlarına doldurma
+  const handleSelectForm = async (formId) => {
+    setSelectedFormId(formId);
+    setFormsError('');
+    try {
+      const formRecord = await getFormRecord(formId);
+         
+      // Form verilerini doldur
+      if (formRecord.formData) {
+        setFormData(formRecord.formData);
+      }
+      
+      // Packing Items listesini doldur - birden fazla yerde olabilir
+      let itemsData = null;
+      
+      // 1. Önce doğrudan packingItems alanını kontrol et
+      if (formRecord.packingItems && Array.isArray(formRecord.packingItems) && formRecord.packingItems.length > 0) {
+        itemsData = formRecord.packingItems;
+      }
+      // 2. formData içinde packingItems varsa onu kullan
+      else if (formRecord.formData?.packingItems && Array.isArray(formRecord.formData.packingItems) && formRecord.formData.packingItems.length > 0) {
+        itemsData = formRecord.formData.packingItems;
+      }
+      
+      if (itemsData) {
+        setPackingItems(itemsData);
+      } else {
+        console.warn('⚠️ Packing Items verisi bulunamadı');
+      }
+      
+      setSuccess('Form verileri başarıyla yüklendi');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (error) {
+      console.error('Form verisi yüklenirken hata:', error);
+      setFormsError('Form verisi yüklenemedi');
+    }
+  };
+
+  // Belge silme fonksiyonu
+  const handleDeleteForm = async (formId, e) => {
+    e.stopPropagation();
+    
+    if (!window.confirm('Bu belgeyi silmek istediğinizden emin misiniz?')) {
+      return;
+    }
+    
+    setFormsError('');
+    try {
+      await deleteFormRecord(formId);
+      setSuccess('Belge başarıyla silindi');
+      setTimeout(() => setSuccess(''), 3000);
+      
+      if (selectedFormId === formId) {
+        setSelectedFormId(null);
+      }
+      
+      await loadSavedForms();
+    } catch (error) {
+      console.error('Belge silinirken hata:', error);
+      setFormsError('Belge silinemedi');
+    }
+  };
 
   // packingItems state değişikliklerini monitor et
   useEffect(() => {
@@ -267,12 +357,19 @@ const PackingListForm = ({ selectedLanguage }) => {
 
       console.log('Etiket verileri gönderiliyor:', labelData);
 
+      // Auth token al
+      const user = auth.currentUser;
+      const token = user ? await user.getIdToken() : null;
+
       const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+      const headers = {
+        'Content-Type': 'application/json',
+      };
+      if (token) headers.Authorization = `Bearer ${token}`;
+
       const response = await fetch(`${apiUrl}/api/pdf/generate-product-label`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify(labelData)
       });
 
@@ -322,8 +419,15 @@ const PackingListForm = ({ selectedLanguage }) => {
   const testBackendConnection = async () => {
     try {
       const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+      // Health check genellikle public olmalı, ama yine de token ekliyoruz
+      const user = auth.currentUser;
+      const token = user ? await user.getIdToken() : null;
+      const headers = {};
+      if (token) headers.Authorization = `Bearer ${token}`;
+
       const response = await fetch(`${apiUrl}/api/health`, {
         method: 'GET',
+        headers,
         timeout: 5000
       });
       return response.ok;
@@ -368,10 +472,18 @@ const PackingListForm = ({ selectedLanguage }) => {
         fileSize: `${(pdfFile.size / 1024).toFixed(1)} KB`
       });
 
+      // Auth token al
+      const user = auth.currentUser;
+      const token = user ? await user.getIdToken() : null;
+
       // Backend'e gönder
       const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+      const headers = {};
+      if (token) headers.Authorization = `Bearer ${token}`;
+
       const response = await fetch(`${apiUrl}/api/upload`, {
         method: 'POST',
+        headers,
         body: formDataUpload
       });
 
@@ -395,13 +507,7 @@ const PackingListForm = ({ selectedLanguage }) => {
       // Backend'den gelen veriyi al
       const result = await response.json();
       
-      //  DETAYLI BACKEND RESPONSE DEBUG 
-      console.log(' ==================== PDF UPLOAD BACKEND RESPONSE ====================');
-      console.log(' Full Backend Response:', result);
-      console.log(' Response keys:', Object.keys(result || {}));
 
-
-      console.log(' ==================== END PDF UPLOAD RESPONSE ====================');
 
       // Packing items verilerini güncelle - Esnek items detection
       let itemsArray = null;
@@ -443,8 +549,6 @@ const PackingListForm = ({ selectedLanguage }) => {
           
           return mappedItem;
         });
-
-        console.log('Tüm mapped items:', mappedItems);
         
         setPackingItems(mappedItems);
         
@@ -509,15 +613,23 @@ const PackingListForm = ({ selectedLanguage }) => {
         formType: 'packing-list'
       };
       
-      // Her zaman packing-list document type kullan
-      const documentType = 'packing-list';
      
+      // 1. Önce veriyi Firestore'a kaydet (Backend hazırsa)
+      try {
+        const savedForm = await createFormRecord(combinedData, 'packing-list');
+        
+        // Listeyi yenile
+        await loadSavedForms();
+      } catch (saveError) {
+        // Backend hazır olmadığında sessizce devam et
+      }
       
-      // Yeni 3-aşamalı PDF generation kullan
+      // 2. PDF oluştur ve indir
+      const documentType = 'packing-list';
       const success = await generatePDFWithHook(combinedData, documentType, selectedLanguage);
       
       if (success) {
-        setSuccess('Packing List PDF başarıyla oluşturuldu ve indirildi!');
+        setSuccess('Packing List PDF başarıyla oluşturuldu!');
       }
     } catch (error) {
       console.error('PDF oluşturma hatası:', error);
@@ -598,6 +710,67 @@ const PackingListForm = ({ selectedLanguage }) => {
           {progress}
         </div>
       )}
+
+      {/* GEÇMİŞ BELGELER LİSTESİ */}
+      <div className="saved-forms-section">
+        <h3>Geçmiş Belgeler</h3>
+        
+        {loadingForms && (
+          <div className="loading-indicator">
+            <span className="spinner"></span> Belgeler yükleniyor...
+          </div>
+        )}
+        
+        {formsError && (
+          <div className="alert alert-error">
+            {formsError}
+          </div>
+        )}
+        
+        {!loadingForms && savedForms.length === 0 && (
+          <p className="no-forms-message">Henüz kaydedilmiş belge bulunmuyor.</p>
+        )}
+        
+        {!loadingForms && savedForms.length > 0 && (
+          <div className="saved-forms-list">
+            {savedForms.map((form) => (
+              <div 
+                key={form.id} 
+                className={`saved-form-item ${selectedFormId === form.id ? 'selected' : ''}`}
+                onClick={() => handleSelectForm(form.id)}
+              >
+                <div className="form-item-header">
+                  <div className="form-item-info">
+                    <strong>
+                      Invoice No: {form.formData?.['INVOICE NUMBER'] || 'N/A'}
+                    </strong>
+                    <span className="form-item-date">
+                      {new Date(form.createdAt).toLocaleDateString('tr-TR', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </span>
+                  </div>
+                  <button 
+                    className="btn-delete-small"
+                    onClick={(e) => handleDeleteForm(form.id, e)}
+                    title="Belgeyi Sil"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <div className="form-item-details">
+                  <span>Müşteri: {form.formData?.['RECIPIENT Şirket Adı'] || 'N/A'}</span>
+                  <span>Ürün Sayısı: {form.packingItems?.length || 0}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* OCR Data Status */}
       {isOCRData && (
@@ -705,7 +878,7 @@ const PackingListForm = ({ selectedLanguage }) => {
             <div className="form-group">
               <label className="form-label">EMAIL</label>
               <input
-                type="email"
+                type="text"
                 className="form-input"
                 value={formData['EMAIL']}
                 onChange={(e) => handleInputChange('EMAIL', e.target.value)}
@@ -803,7 +976,7 @@ const PackingListForm = ({ selectedLanguage }) => {
             <div className="form-group">
               <label className="form-label">RECIPIENT Email</label>
               <input
-                type="email"
+                type="text"
                 className="form-input"
                 value={formData['RECIPIENT Email']}
                 onChange={(e) => handleInputChange('RECIPIENT Email', e.target.value)}
@@ -899,7 +1072,7 @@ const PackingListForm = ({ selectedLanguage }) => {
             <div className="form-group">
               <label className="form-label">DELIVERY ADDRESS Email</label>
               <input
-                type="email"
+                type="text"
                 className="form-input"
                 value={formData['DELIVERY ADDRESS Email']}
                 onChange={(e) => handleInputChange('DELIVERY ADDRESS Email', e.target.value)}
@@ -1259,7 +1432,6 @@ const PackingListForm = ({ selectedLanguage }) => {
                       className="form-input"
                       value={item['GROSS WEIGHT(KG)'] || ''}
                       onChange={(e) => {
-                        console.log(` GROSS WEIGHT onChange: "${e.target.value}" (input value)`);
                         handlePackingItemChange(item.id, 'GROSS WEIGHT(KG)', e.target.value);
                       }}
                       placeholder="Brüt ağırlık (kg)"

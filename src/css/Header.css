@@ -1,0 +1,129 @@
+/* src/css/Header.css */
+
+.app-header {
+  padding: 20px 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.app-logo {
+  width: 50px;
+  height: 50px;
+  padding: 0px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.header-title h1 {
+  margin: 0;
+  color: black;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #d0d0d0;
+  padding: 8px 16px;
+  border-radius: 25px;
+  backdrop-filter: blur(10px);
+}
+
+.user-icon {
+  font-size: 20px;
+}
+
+.user-email {
+  color: black;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.logout-button {
+  background: #d0d0d0;
+  color: black;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  padding: 8px 20px;
+  border-radius: 25px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.logout-button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.logout-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.logout-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .app-header {
+    padding: 15px 20px;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .header-left {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .header-right {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .header-title h1 {
+    font-size: 20px;
+  }
+
+  .user-email {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .user-info {
+    padding: 6px 12px;
+  }
+
+  .logout-button {
+    padding: 6px 16px;
+    font-size: 13px;
+  }
+
+  .app-logo {
+    width: 40px;
+    height: 40px;
+  }
+}

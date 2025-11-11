@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { auth } from '../firebase/config';
 import '../css/RecipientManager.css';
 
 
@@ -21,23 +22,34 @@ const RecipientManager = ({ onRecipientSelect, selectedRecipient }) => {
     email: ''
   });
 
+  // Helper to get auth token
+  const getAuthToken = async () => {
+    try {
+      const user = auth.currentUser;
+      if (user) {
+        return await user.getIdToken();
+      }
+      return null;
+    } catch (error) {
+      console.warn('Could not get auth token:', error);
+      return null;
+    }
+  };
+
   // API çağrıları
   const fetchRecipients = React.useCallback(async () => {
     try {
-      console.log('Recipients yükleniyor...'); // Debug log
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-      console.log('API URL:', apiUrl); // Debug log
-      const fullUrl = `${apiUrl}/api/recipients`;
-      console.log('Full URL:', fullUrl); // Debug log
-      const response = await fetch(fullUrl);
+      const token = await getAuthToken();
+      const headers = {};
+      if (token) headers.Authorization = `Bearer ${token}`;
+
+      const response = await fetch('/api/recipients', { headers });
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      const result = await response.json();
-      console.log('Recipients yüklendi (API):', result); // Debug log
-      
+      const result = await response.json();      
       // Backend'den gelen yapı: {success: true, count: 3, data: [...]}
       const recipientsList = result.data || [];
       setRecipients(Array.isArray(recipientsList) ? recipientsList : []);
@@ -56,17 +68,17 @@ const RecipientManager = ({ onRecipientSelect, selectedRecipient }) => {
 
     setIsLoading(true);
     try {
-      console.log('Arama yapılıyor:', query); // Debug log
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-      const response = await fetch(`${apiUrl}/api/recipients/search?q=${encodeURIComponent(query)}`);
+      const token = await getAuthToken();
+      const headers = {};
+      if (token) headers.Authorization = `Bearer ${token}`;
+
+      const response = await fetch(`/api/recipients/search?q=${encodeURIComponent(query)}`, { headers });
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      const result = await response.json();
-      console.log('Arama sonuçları (API):', result); // Debug log
-      
+      const result = await response.json();      
       // Backend'den gelen yapı: {success: true, count: X, data: [...]}
       const searchData = result.data || [];
       setSearchResults(Array.isArray(searchData) ? searchData : []);
@@ -87,9 +99,7 @@ const RecipientManager = ({ onRecipientSelect, selectedRecipient }) => {
       return;
     }
 
-    try {
-      console.log('Kaydetme işlemi başlıyor...', formData); // Debug log
-      
+    try {      
       const recipientData = {
         companyName: formData.companyName.trim(),
         address: formData.address.trim(),
@@ -100,21 +110,22 @@ const RecipientManager = ({ onRecipientSelect, selectedRecipient }) => {
         email: formData.email.trim()
       };
 
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
       const url = editingRecipient 
-        ? `${apiUrl}/api/recipients/${editingRecipient.id}`
-        : `${apiUrl}/api/recipients`;
+        ? `/api/recipients/${editingRecipient.id}`
+        : '/api/recipients';
       
       const method = editingRecipient ? 'PUT' : 'POST';
 
-      console.log('API isteği:', { url, method, data: recipientData }); // Debug log
+      const token = await getAuthToken();
+      const headers = { 
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      };
+      if (token) headers.Authorization = `Bearer ${token}`;
 
       const response = await fetch(url, {
         method,
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
+        headers,
         body: JSON.stringify(recipientData)
       });
 
@@ -142,9 +153,13 @@ const RecipientManager = ({ onRecipientSelect, selectedRecipient }) => {
   const deleteRecipient = async (id) => {
     if (window.confirm('Bu recipient silinsin mi?')) {
       try {
-        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-        const response = await fetch(`${apiUrl}/api/recipients/${id}`, {
-          method: 'DELETE'
+        const token = await getAuthToken();
+        const headers = {};
+        if (token) headers.Authorization = `Bearer ${token}`;
+
+        const response = await fetch(`/api/recipients/${id}`, {
+          method: 'DELETE',
+          headers
         });
         
         if (!response.ok) {
@@ -199,7 +214,6 @@ const RecipientManager = ({ onRecipientSelect, selectedRecipient }) => {
   };
 
   const handleRecipientSelect = (recipient) => {
-    console.log('Recipient seçildi:', recipient); // Debug log
     setSearchTerm(recipient.companyName || '');
     setShowDropdown(false);
     onRecipientSelect(recipient);
@@ -410,7 +424,7 @@ const RecipientManager = ({ onRecipientSelect, selectedRecipient }) => {
                 <div className="form-group">
                   <label className="form-label">Email</label>
                   <input
-                    type="email"
+                    type="text"
                     className="form-input"
                     value={formData.email}
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
