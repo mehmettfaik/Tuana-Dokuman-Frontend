@@ -616,7 +616,7 @@ const PackingListForm = ({ selectedLanguage }) => {
      
       // 1. Önce veriyi Firestore'a kaydet (Backend hazırsa)
       try {
-        const savedForm = await createFormRecord(combinedData, 'packing-list');
+        await createFormRecord(combinedData, 'packing-list');
         
         // Listeyi yenile
         await loadSavedForms();
