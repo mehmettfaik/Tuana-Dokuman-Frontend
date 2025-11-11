@@ -130,7 +130,7 @@ const RecipientManager = ({ onRecipientSelect, selectedRecipient }) => {
       };
       if (token) headers.Authorization = `Bearer ${token}`;
 
-      console.debug('Saving recipient to', 'method', method);
+      console.debug('Saving recipient to', url, 'method', method);
       const response = await fetch(url, {
         method,
         headers,
@@ -142,7 +142,7 @@ const RecipientManager = ({ onRecipientSelect, selectedRecipient }) => {
       }
 
       const result = await response.json();
-      console.log('Kaydetme başarılı:'); // Debug log
+      console.log('Kaydetme başarılı:', result); // Debug log
       
       // API başarılı - recipients listesini yenile
       await fetchRecipients();
