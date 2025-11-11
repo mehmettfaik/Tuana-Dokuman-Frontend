@@ -36,6 +36,9 @@ const RecipientManager = ({ onRecipientSelect, selectedRecipient }) => {
     }
   };
 
+  // API base URL (use env var in production, fallback to localhost for local dev)
+  const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+
   // API çağrıları
   const fetchRecipients = React.useCallback(async () => {
     try {
@@ -43,7 +46,9 @@ const RecipientManager = ({ onRecipientSelect, selectedRecipient }) => {
       const headers = {};
       if (token) headers.Authorization = `Bearer ${token}`;
 
-      const response = await fetch('/api/recipients', { headers });
+  const url = `${apiUrl}/api/recipients`;
+  console.debug('Fetching recipients from', url);
+  const response = await fetch(url, { headers });
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -72,7 +77,9 @@ const RecipientManager = ({ onRecipientSelect, selectedRecipient }) => {
       const headers = {};
       if (token) headers.Authorization = `Bearer ${token}`;
 
-      const response = await fetch(`/api/recipients/search?q=${encodeURIComponent(query)}`, { headers });
+  const url = `${apiUrl}/api/recipients/search?q=${encodeURIComponent(query)}`;
+  console.debug('Searching recipients at', url);
+  const response = await fetch(url, { headers });
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -110,9 +117,9 @@ const RecipientManager = ({ onRecipientSelect, selectedRecipient }) => {
         email: formData.email.trim()
       };
 
-      const url = editingRecipient 
-        ? `/api/recipients/${editingRecipient.id}`
-        : '/api/recipients';
+      const url = editingRecipient
+        ? `${apiUrl}/api/recipients/${editingRecipient.id}`
+        : `${apiUrl}/api/recipients`;
       
       const method = editingRecipient ? 'PUT' : 'POST';
 
@@ -123,6 +130,7 @@ const RecipientManager = ({ onRecipientSelect, selectedRecipient }) => {
       };
       if (token) headers.Authorization = `Bearer ${token}`;
 
+      console.debug('Saving recipient to', url, 'method', method);
       const response = await fetch(url, {
         method,
         headers,
@@ -157,7 +165,9 @@ const RecipientManager = ({ onRecipientSelect, selectedRecipient }) => {
         const headers = {};
         if (token) headers.Authorization = `Bearer ${token}`;
 
-        const response = await fetch(`/api/recipients/${id}`, {
+        const url = `${apiUrl}/api/recipients/${id}`;
+        console.debug('Deleting recipient at', url);
+        const response = await fetch(url, {
           method: 'DELETE',
           headers
         });
