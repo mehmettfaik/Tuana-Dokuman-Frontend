@@ -329,8 +329,7 @@ IBAN :TR02 0003 2000 0320 0000 9679 79`
       
       // 1. Önce veriyi Firestore'a kaydet (Backend hazırsa)
       try {
-        const savedForm = await createFormRecord(combinedData, 'proforma-invoice');
-        
+        await createFormRecord(combinedData, 'proforma-invoice');        
         // Listeyi yenile
         await loadSavedForms();
       } catch (saveError) {

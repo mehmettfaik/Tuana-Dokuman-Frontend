@@ -316,8 +316,7 @@ const SiparisForm = ({ selectedLanguage }) => {
       
       // 1. Önce veriyi Firestore'a kaydet (Backend hazırsa)
       try {
-        const savedForm = await createFormRecord(requestData, 'siparis');
-        
+    await createFormRecord(requestData, 'siparis');        
         // Listeyi yenile
         await loadSavedForms();
       } catch (saveError) {

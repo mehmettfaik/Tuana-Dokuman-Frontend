@@ -323,8 +323,7 @@ IBAN :TR02 0003 2000 0320 0000 9679 79`
       
       // 1. Önce veriyi Firestore'a kaydet (Backend hazırsa)
       try {
-        const savedForm = await createFormRecord(combinedData, 'invoice');
-        await loadSavedForms();
+        await createFormRecord(combinedData, 'invoice');        await loadSavedForms();
       } catch (saveError) {
         console.warn('Form kaydedilemedi (Backend henüz hazır değil):', saveError.message);
         // Backend hazır olmadığında sessizce devam et
