@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import usePDFGeneration from '../hooks/usePDFGeneration';
 import SystemStatus from './SystemStatus';
 import RecipientManager from './RecipientManager';
+import { createFormRecord, getFormRecords, getFormRecord, deleteFormRecord } from '../api';
 import '../css/ProformaInvoiceForm.css';
 
 const ProformaInvoiceForm = ({ selectedLanguage }) => {
@@ -81,6 +82,96 @@ const ProformaInvoiceForm = ({ selectedLanguage }) => {
 
   // Yeni PDF generation hook'u
   const { isGenerating, progress, error: pdfError, generatePDF: generatePDFWithHook } = usePDFGeneration();
+
+  // Geçmiş belgeler için state'ler
+  const [savedForms, setSavedForms] = useState([]);
+  const [loadingForms, setLoadingForms] = useState(false);
+  const [selectedFormId, setSelectedFormId] = useState(null);
+  const [formsError, setFormsError] = useState('');
+
+  // Sayfa yüklendiğinde geçmiş belgeleri yükle
+  useEffect(() => {
+    loadSavedForms();
+  }, []);
+
+  // Geçmiş belgeleri yükleme fonksiyonu
+  const loadSavedForms = async () => {
+    setLoadingForms(true);
+    setFormsError('');
+    try {
+      const forms = await getFormRecords('proforma-invoice');
+      setSavedForms(forms || []);
+    } catch (error) {
+      console.warn('Geçmiş belgeler yüklenemedi (Backend henüz hazır değil):', error.message);
+      setSavedForms([]);
+    } finally {
+      setLoadingForms(false);
+    }
+  };
+
+  // Belge seçme ve form alanlarına doldurma
+  const handleSelectForm = async (formId) => {
+    setSelectedFormId(formId);
+    setFormsError('');
+    try {
+      const formRecord = await getFormRecord(formId);
+      
+      // Form verilerini doldur
+      if (formRecord.formData) {
+        setFormData(formRecord.formData);
+      }
+      
+      // Ürün listesini doldur - birden fazla yerde olabilir
+      let goodsData = null;
+      
+      // 1. Önce doğrudan goods alanını kontrol et
+      if (formRecord.goods && Array.isArray(formRecord.goods) && formRecord.goods.length > 0) {
+        goodsData = formRecord.goods;
+      }
+      // 2. formData içinde goods varsa onu kullan
+      else if (formRecord.formData?.goods && Array.isArray(formRecord.formData.goods) && formRecord.formData.goods.length > 0) {
+        goodsData = formRecord.formData.goods;
+      }
+      
+      if (goodsData) {
+        console.log('Goods bulundu, yükleniyor:', goodsData);
+        setGoods(goodsData);
+      } else {
+        console.warn(' Goods verisi bulunamadı');
+      }
+      
+      setSuccess('Form verileri başarıyla yüklendi');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (error) {
+      console.error('Form verisi yüklenirken hata:', error);
+      setFormsError('Form verisi yüklenemedi');
+    }
+  };
+
+  // Belge silme fonksiyonu
+  const handleDeleteForm = async (formId, e) => {
+    e.stopPropagation();
+    
+    if (!window.confirm('Bu belgeyi silmek istediğinizden emin misiniz?')) {
+      return;
+    }
+    
+    setFormsError('');
+    try {
+      await deleteFormRecord(formId);
+      setSuccess('Belge başarıyla silindi');
+      setTimeout(() => setSuccess(''), 3000);
+      
+      if (selectedFormId === formId) {
+        setSelectedFormId(null);
+      }
+      
+      await loadSavedForms();
+    } catch (error) {
+      console.error('Belge silinirken hata:', error);
+      setFormsError('Belge silinemedi');
+    }
+  };
 
   const handleInputChange = (name, value) => {
     setFormData(prev => ({
@@ -235,13 +326,23 @@ IBAN :TR02 0003 2000 0320 0000 9679 79`
         goods: goods
       };
       
-      console.log('Gönderilen form data:', combinedData);
       
-      // Yeni 3-aşamalı PDF generation kullan
+      // 1. Önce veriyi Firestore'a kaydet (Backend hazırsa)
+      try {
+        const savedForm = await createFormRecord(combinedData, 'proforma-invoice');
+        
+        // Listeyi yenile
+        await loadSavedForms();
+      } catch (saveError) {
+        console.warn('Form kaydedilemedi (Backend henüz hazır değil):', saveError.message);
+        // Backend hazır olmadığında sessizce devam et
+      }
+      
+      // 2. PDF oluştur ve indir
       const success = await generatePDFWithHook(combinedData, 'proforma-invoice', selectedLanguage);
       
       if (success) {
-        setSuccess('Proforma Invoice PDF başarıyla oluşturuldu ve indirildi!');
+        setSuccess('Proforma Invoice PDF başarıyla oluşturuldu!');
       }
     } catch (error) {
       console.error('PDF oluşturma hatası:', error);
@@ -337,6 +438,67 @@ IBAN :TR02 0003 2000 0320 0000 9679 79`
         </div>
       )}
 
+      {/* GEÇMİŞ BELGELER LİSTESİ */}
+      <div className="saved-forms-section">
+        <h3>Geçmiş Belgeler</h3>
+        
+        {loadingForms && (
+          <div className="loading-indicator">
+            <span className="spinner"></span> Belgeler yükleniyor...
+          </div>
+        )}
+        
+        {formsError && (
+          <div className="alert alert-error">
+            {formsError}
+          </div>
+        )}
+        
+        {!loadingForms && savedForms.length === 0 && (
+          <p className="no-forms-message">Henüz kaydedilmiş belge bulunmuyor.</p>
+        )}
+        
+        {!loadingForms && savedForms.length > 0 && (
+          <div className="saved-forms-list">
+            {savedForms.map((form) => (
+              <div 
+                key={form.id} 
+                className={`saved-form-item ${selectedFormId === form.id ? 'selected' : ''}`}
+                onClick={() => handleSelectForm(form.id)}
+              >
+                <div className="form-item-header">
+                  <div className="form-item-info">
+                    <strong>
+                      Müşteri: {form.formData?.['RECIPIENT Şirket Adı'] || 'N/A'}
+                    </strong>
+                    <span className="form-item-date">
+                      {new Date(form.createdAt).toLocaleDateString('tr-TR', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </span>
+                  </div>
+                  <button 
+                    className="btn-delete-small"
+                    onClick={(e) => handleDeleteForm(form.id, e)}
+                    title="Belgeyi Sil"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <div className="form-item-details">
+                  <span>Teslim: {form.formData?.['DELIVERY ADDRESS Şirket Adı'] || 'N/A'}</span>
+                  <span>Ürün Sayısı: {form.goods?.length || 0}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       <form onSubmit={handleSubmit} className="proforma-form">
         {/* Responsible Person Section */}
         <div className="form-section">
@@ -385,7 +547,7 @@ IBAN :TR02 0003 2000 0320 0000 9679 79`
             <div className="form-group">
               <label className="form-label">EMAIL</label>
               <input
-                type="email"
+                type="text"
                 className="form-input"
                 value={formData['EMAIL']}
                 onChange={(e) => handleInputChange('EMAIL', e.target.value)}
@@ -483,7 +645,7 @@ IBAN :TR02 0003 2000 0320 0000 9679 79`
             <div className="form-group">
               <label className="form-label">RECIPIENT Email</label>
               <input
-                type="email"
+                type="text"
                 className="form-input"
                 value={formData['RECIPIENT Email']}
                 onChange={(e) => handleInputChange('RECIPIENT Email', e.target.value)}
@@ -579,7 +741,7 @@ IBAN :TR02 0003 2000 0320 0000 9679 79`
             <div className="form-group">
               <label className="form-label">DELIVERY ADDRESS Email</label>
               <input
-                type="email"
+                type="text"
                 className="form-input"
                 value={formData['DELIVERY ADDRESS Email']}
                 onChange={(e) => handleInputChange('DELIVERY ADDRESS Email', e.target.value)}

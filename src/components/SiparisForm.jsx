@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import usePDFGeneration from '../hooks/usePDFGeneration';
 import RecipientManager from './RecipientManager';
+import { createFormRecord, getFormRecords, getFormRecord, deleteFormRecord } from '../api';
 import '../css/SiparisForm.css';
 
 const SiparisForm = ({ selectedLanguage }) => {
@@ -79,6 +80,99 @@ const SiparisForm = ({ selectedLanguage }) => {
 
   // Yeni PDF generation hook'u
   const { isGenerating, error: pdfError, generatePDF: generatePDFWithHook } = usePDFGeneration();
+
+  // Geçmiş belgeler için state'ler
+  const [savedForms, setSavedForms] = useState([]);
+  const [loadingForms, setLoadingForms] = useState(false);
+  const [selectedFormId, setSelectedFormId] = useState(null);
+  const [formsError, setFormsError] = useState('');
+
+  // Sayfa yüklendiğinde geçmiş belgeleri yükle
+  useEffect(() => {
+    loadSavedForms();
+  }, []);
+
+  // Geçmiş belgeleri yükleme fonksiyonu
+  const loadSavedForms = async () => {
+    setLoadingForms(true);
+    setFormsError('');
+    try {
+      const forms = await getFormRecords('siparis');
+      setSavedForms(forms || []);
+    } catch (error) {
+      console.warn('Geçmiş belgeler yüklenemedi (Backend henüz hazır değil):', error.message);
+      // Backend hazır olmadığında sessizce başarısız ol
+      setSavedForms([]);
+      // Kullanıcıya gösterilecek hata mesajı yok - backend hazır olana kadar
+    } finally {
+      setLoadingForms(false);
+    }
+  };
+
+  // Belge seçme ve form alanlarına doldurma
+  const handleSelectForm = async (formId) => {
+    setSelectedFormId(formId);
+    setFormsError('');
+    try {
+      const formRecord = await getFormRecord(formId);
+    
+      // Form verilerini doldur
+      if (formRecord.formData) {
+        setFormData(formRecord.formData);
+      }
+      
+      // Ürün listesini doldur - birden fazla yerde olabilir
+      let goodsData = null;
+      
+      // 1. Önce doğrudan goods alanını kontrol et
+      if (formRecord.goods && Array.isArray(formRecord.goods) && formRecord.goods.length > 0) {
+        goodsData = formRecord.goods;
+      }
+      // 2. formData içinde goods varsa onu kullan
+      else if (formRecord.formData?.goods && Array.isArray(formRecord.formData.goods) && formRecord.formData.goods.length > 0) {
+        goodsData = formRecord.formData.goods;
+      }
+      
+      if (goodsData) {
+        setGoods(goodsData);
+      } else {
+        console.warn(' Goods verisi bulunamadı');
+      }
+      
+      setSuccess('Form verileri başarıyla yüklendi');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (error) {
+      console.error('Form verisi yüklenirken hata:', error);
+      setFormsError('Form verisi yüklenemedi');
+    }
+  };
+
+  // Belge silme fonksiyonu
+  const handleDeleteForm = async (formId, e) => {
+    e.stopPropagation(); // Parent click event'ini engelle
+    
+    if (!window.confirm('Bu belgeyi silmek istediğinizden emin misiniz?')) {
+      return;
+    }
+    
+    setFormsError('');
+    try {
+      await deleteFormRecord(formId);
+      setSuccess('Belge başarıyla silindi');
+      setTimeout(() => setSuccess(''), 3000);
+      
+      // Eğer silinen form seçili idiyse, seçimi temizle
+      if (selectedFormId === formId) {
+        setSelectedFormId(null);
+      }
+      
+      // Listeyi yenile
+      await loadSavedForms();
+    } catch (error) {
+      console.error('Belge silinirken hata:', error);
+      setFormsError('Belge silinemedi');
+    }
+  };
 
   const handleInputChange = (name, value) => {
     setFormData(prev => ({
@@ -219,13 +313,23 @@ const SiparisForm = ({ selectedLanguage }) => {
         }
       };
 
-      console.log('Gönderilen sipariş data:', requestData);
       
-      // Yeni 3-aşamalı PDF generation kullan
+      // 1. Önce veriyi Firestore'a kaydet (Backend hazırsa)
+      try {
+        const savedForm = await createFormRecord(requestData, 'siparis');
+        
+        // Listeyi yenile
+        await loadSavedForms();
+      } catch (saveError) {
+        console.warn('Form kaydedilemedi (Backend henüz hazır değil):', saveError.message);
+        // Backend hazır olmadığında sessizce devam et - PDF oluşturmaya devam
+      }
+      
+      // 2. PDF oluştur ve indir
       const success = await generatePDFWithHook(requestData, 'siparis', selectedLanguage);
       
       if (success) {
-        setSuccess('Sipariş formu PDF başarıyla oluşturuldu ve indirildi!');
+        setSuccess('Sipariş formu PDF başarıyla oluşturuldu!');
       }
     } catch (err) {
       console.error('Form submission error:', err);
@@ -308,6 +412,67 @@ const SiparisForm = ({ selectedLanguage }) => {
           {success}
         </div>
       )}
+
+      {/* GEÇMİŞ BELGELER LİSTESİ */}
+      <div className="saved-forms-section">
+        <h3>Geçmiş Belgeler</h3>
+        
+        {loadingForms && (
+          <div className="loading-indicator">
+            <span className="spinner"></span> Belgeler yükleniyor...
+          </div>
+        )}
+        
+        {formsError && (
+          <div className="alert alert-error">
+            {formsError}
+          </div>
+        )}
+        
+        {!loadingForms && savedForms.length === 0 && (
+          <p className="no-forms-message">Henüz kaydedilmiş belge bulunmuyor.</p>
+        )}
+        
+        {!loadingForms && savedForms.length > 0 && (
+          <div className="saved-forms-list">
+            {savedForms.map((form) => (
+              <div 
+                key={form.id} 
+                className={`saved-form-item ${selectedFormId === form.id ? 'selected' : ''}`}
+                onClick={() => handleSelectForm(form.id)}
+              >
+                <div className="form-item-header">
+                  <div className="form-item-info">
+                    <strong>
+                      Sipariş No: {form.formData?.['ORDER NUMBER'] || 'N/A'}
+                    </strong>
+                    <span className="form-item-date">
+                      {new Date(form.createdAt).toLocaleDateString('tr-TR', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </span>
+                  </div>
+                  <button 
+                    className="btn-delete-small"
+                    onClick={(e) => handleDeleteForm(form.id, e)}
+                    title="Belgeyi Sil"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <div className="form-item-details">
+                  <span>Müşteri: {form.formData?.['RECIPIENT Şirket Adı'] || 'N/A'}</span>
+                  <span>Ürün Sayısı: {form.goods?.length || 0}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       <form onSubmit={handleSubmit} className="siparis-form">
         {/* Sipariş Bilgileri */}
@@ -394,7 +559,7 @@ const SiparisForm = ({ selectedLanguage }) => {
             <div className="form-group">
               <label className="form-label">EMAIL</label>
               <input
-                type="email"
+                type="text"
                 className="form-input"
                 value={formData['EMAIL']}
                 onChange={(e) => handleInputChange('EMAIL', e.target.value)}
@@ -486,7 +651,7 @@ const SiparisForm = ({ selectedLanguage }) => {
             <div className="form-group">
               <label className="form-label">Alıcı Email</label>
               <input
-                type="email"
+                type="text"
                 className="form-input"
                 value={formData['RECIPIENT Email']}
                 onChange={(e) => handleInputChange('RECIPIENT Email', e.target.value)}
@@ -576,7 +741,7 @@ const SiparisForm = ({ selectedLanguage }) => {
             <div className="form-group">
               <label className="form-label">Teslimat Email</label>
               <input
-                type="email"
+                type="text"
                 className="form-input"
                 value={formData['DELIVERY ADDRESS Email']}
                 onChange={(e) => handleInputChange('DELIVERY ADDRESS Email', e.target.value)}
