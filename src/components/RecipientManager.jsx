@@ -62,7 +62,7 @@ const RecipientManager = ({ onRecipientSelect, selectedRecipient }) => {
       console.error('Backend hatası:', error.message);
       setRecipients([]);
     }
-  }, []);
+  }, [apiUrl]);
 
   const searchRecipients = async (query) => {
     if (!query.trim()) {
