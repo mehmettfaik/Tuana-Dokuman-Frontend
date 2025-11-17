@@ -3,7 +3,7 @@ import usePDFGeneration from '../hooks/usePDFGeneration';
 import RecipientManager from './RecipientManager';
 import '../css/HangersShipmentForm.css';
 
-const HangersShipmentForm = ({ selectedLanguage }) => {
+const FabricTechnicalForm = ({ selectedLanguage }) => {
   // Sorumlu kişiler listesi
   const responsiblePersons = {
     'NURAN YELMEN': {
@@ -783,4 +783,4 @@ const handleCourierChange = (value) => {
   );
 };
 
-export default HangersShipmentForm;
+export default FabricTechnicalForm;
