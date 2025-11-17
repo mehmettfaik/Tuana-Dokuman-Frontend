@@ -55,6 +55,36 @@
   font-weight: 500;
 }
 
+.excel-button {
+  background: linear-gradient(135deg, #1e7e34 0%, #28a745 100%);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  padding: 8px 20px;
+  border-radius: 25px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 8px rgba(30, 126, 52, 0.3);
+}
+
+.excel-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #28a745 0%, #34ce57 100%);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(30, 126, 52, 0.4);
+}
+
+.excel-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.excel-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .logout-button {
   background: #d0d0d0;
   color: black;
