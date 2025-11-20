@@ -112,7 +112,12 @@ const PackingListForm = ({ selectedLanguage }) => {
     setFormsError('');
     try {
       const forms = await getFormRecords('packing-list');
-      setSavedForms(forms || []);
+      // Normalize returned forms so `packingItems` is always available at root
+      const normalized = (forms || []).map(f => ({
+        ...f,
+        packingItems: f.packingItems && Array.isArray(f.packingItems) ? f.packingItems : (f.formData?.packingItems && Array.isArray(f.formData.packingItems) ? f.formData.packingItems : [])
+      }));
+      setSavedForms(normalized);
     } catch (error) {
       setSavedForms([]);
     } finally {

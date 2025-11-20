@@ -159,9 +159,13 @@ export const createFormRecord = async (formData, formType) => {
   try {
     // formData objesi içinde goods, packingItems veya totals olabilir, onları ayrıştır
     const { goods, packingItems, totals, ...actualFormData } = formData;
-    
+    // Ensure packingItems and goods are available both at root and inside formData
     const payload = {
-      formData: actualFormData,
+      formData: {
+        ...actualFormData,
+        packingItems: packingItems || [],
+        goods: goods || []
+      },
       goods: goods || [],
       packingItems: packingItems || [],
       totals: totals || null,
