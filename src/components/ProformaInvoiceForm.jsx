@@ -1042,7 +1042,6 @@ IBAN :TR02 0003 2000 0320 0000 9679 79`
                         value={item['AMOUNT']}
                         onChange={(e) => handleGoodsChange(item.id, 'AMOUNT', e.target.value)}
                         placeholder="Toplam tutar (otom. hesaplanır)"
-                        readOnly
                         style={{ backgroundColor: '#f8f9fa', cursor: 'default', flex: '1' }}
                       />
                       <select
