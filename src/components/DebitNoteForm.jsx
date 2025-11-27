@@ -213,7 +213,6 @@ const DebitNoteForm = ({ selectedLanguage }) => {
         totalAmount: calculateTotal()
       };
 
-      console.log('Gönderilen debit note data:', combinedData);
 
       // Yeni 3-aşamalı PDF generation kullan
       const success = await generatePDFWithHook(combinedData, 'debit-note', selectedLanguage);
@@ -377,7 +376,7 @@ const DebitNoteForm = ({ selectedLanguage }) => {
             <div className="form-group">
               <label className="form-label">EMAIL</label>
               <input
-                type="email"
+                type="text"
                 className="form-input"
                 value={formData['EMAIL']}
                 onChange={(e) => handleInputChange('EMAIL', e.target.value)}
@@ -475,7 +474,7 @@ const DebitNoteForm = ({ selectedLanguage }) => {
             <div className="form-group">
               <label className="form-label">RECIPIENT Email</label>
               <input
-                type="email"
+                type="text"
                 className="form-input"
                 value={formData['RECIPIENT Email']}
                 onChange={(e) => handleInputChange('RECIPIENT Email', e.target.value)}
@@ -571,7 +570,7 @@ const DebitNoteForm = ({ selectedLanguage }) => {
             <div className="form-group">
               <label className="form-label">DELIVERY ADDRESS Email</label>
               <input
-                type="email"
+                type="text"
                 className="form-input"
                 value={formData['DELIVERY ADDRESS Email']}
                 onChange={(e) => handleInputChange('DELIVERY ADDRESS Email', e.target.value)}
@@ -586,23 +585,38 @@ const DebitNoteForm = ({ selectedLanguage }) => {
           <h3 className="section-title">PAYMENT & SHIPPING DETAILS</h3>
           <div className="form-grid">
             <div className="form-group">
-              <label className="form-label">Payment Terms</label>
-              <select
-                className="form-input"
-                value={formData['Payment Terms']}
-                onChange={(e) => handleInputChange('Payment Terms', e.target.value)}
-              >
-                <option value="">Ödeme vadesi seçin</option>
-                <option value="30 DAYS">30 DAYS</option>
-                <option value="60 DAYS">60 DAYS</option>
-                <option value="90 DAYS">90 DAYS</option>
-                <option value="120 DAYS">120 DAYS</option>
-                <option value="150 DAYS">150 DAYS</option>
-                <option value="180 DAYS">180 DAYS</option>
-                <option value="IMMEDIATELY">IMMEDIATELY</option>
-                <option value="CASH IN ADVANCE">CASH IN ADVANCE</option>
-              </select>
-            </div>
+  <label className="form-label">Payment Terms</label>
+
+  {/* Select Menü */}
+  <select
+    className="form-input"
+    value={formData['Payment Terms']}
+    onChange={(e) => handleInputChange('Payment Terms', e.target.value)}
+  >
+    <option value="">Ödeme vadesi seçin</option>
+    <option value=" DAYS">--Düzenlenebilir-- </option>
+    <option value="30 DAYS">30 DAYS</option>
+    <option value="60 DAYS">60 DAYS</option>
+    <option value="90 DAYS">90 DAYS</option>
+    <option value="120 DAYS">120 DAYS</option>
+    <option value="150 DAYS">150 DAYS</option>
+    <option value="180 DAYS">180 DAYS</option>
+    <option value="IMMEDIATELY">IMMEDIATELY</option>
+    <option value="CASH IN ADVANCE">CASH IN ADVANCE</option>
+  </select>
+
+  {/* Seçilen değer düzenlenebilir input */}
+  {formData["Payment Terms"] !== "" && (
+    <input
+      type="text"
+      className="form-input"
+      style={{ marginTop: "8px" }}
+      value={formData["Payment Terms"]}
+      onChange={(e) => handleInputChange("Payment Terms", e.target.value)}
+      placeholder="Ödeme vadesini düzenle"
+    />
+  )}
+</div>
             
             <div className="form-group">
               <label className="form-label">Transport Type</label>
