@@ -80,6 +80,8 @@ export const generatePDF = async (formData, formType = 'fabric-technical', langu
       endpoint = '/api/pdf/generate-siparis';
     } else if (formType === 'price-offer') {
       endpoint = '/api/pdf/generate-price-offer';
+    } else if (formType === 'quality-control') {
+      endpoint = '/api/pdf/generate-quality-control';
     } else {
       // Genel endpoint (eski API uyumluluğu için)
       endpoint = '/api/pdf/generate';

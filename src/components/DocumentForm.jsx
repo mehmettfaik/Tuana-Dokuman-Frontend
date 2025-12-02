@@ -10,7 +10,8 @@ import DebitNoteForm from './DebitNoteForm';
 import OrderConfirmationForm from './OrderConfirmationForm';
 import SiparisForm from './SiparisForm'; 
 import PriceOfferForm from './PriceOfferForm';
-import HangersShipmentForm from './HangersShipmentForm'; 
+import HangersShipmentForm from './HangersShipmentForm';
+import QualityControlForm from './QualityControlForm'; 
 
 const fieldMap = {
   fiyatTeklif: [
@@ -27,12 +28,8 @@ const DocumentForm = ({ selectedDocType, selectedLanguage }) => {
   const [error, setError] = useState(null);
   const fields = fieldMap[selectedDocType] || [];
 
-  // Debug: Hangi document type seçildiğini kontrol et
-  console.log('Selected Document Type:', selectedDocType);
-
   // Eğer teknik föy seçilmişse, özel form komponentini göster
   if (selectedDocType === 'teknikFoy') {
-    console.log('Opening FabricTechnicalForm');
     return <FabricTechnicalForm selectedLanguage={selectedLanguage} />;
   }
 
@@ -77,8 +74,12 @@ const DocumentForm = ({ selectedDocType, selectedLanguage }) => {
 
   // Eğer hangers shipment seçilmişse, özel form komponentini göster
   if (selectedDocType === 'hangersShipment') {
-    console.log('Opening HangersShipmentForm');
     return <HangersShipmentForm selectedLanguage={selectedLanguage} />;
+  }
+
+  // Eğer quality control seçilmişse, özel form komponentini göster
+  if (selectedDocType === 'qualityControl') {
+    return <QualityControlForm selectedLanguage={selectedLanguage} />;
   }
 
   const handleChange = (e, fieldName) => {

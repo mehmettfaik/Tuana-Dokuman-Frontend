@@ -16,7 +16,6 @@ class PDFService {
       }
       return null;
     } catch (error) {
-      console.warn('Could not get auth token:', error);
       return null;
     }
   }
@@ -64,6 +63,7 @@ class PDFService {
   // 1. PDF üretimini başlat
   async startPDFGeneration(docType, formData, language = 'en') {
     try {
+      
       const token = await this.getAuthToken();
       if (!token) {
         throw new Error('Authentication token gerekli');
@@ -73,15 +73,16 @@ class PDFService {
         Authorization: `Bearer ${token}`
       };
 
+      const payload = {
+        docType,
+        formData,
+        language
+      };
       const response = await fetch(`${this.baseURL}/api/pdf/start`, {
         method: 'POST',
         mode: 'cors',
         headers,
-        body: JSON.stringify({
-          docType,
-          formData,
-          language
-        })
+        body: JSON.stringify(payload)
       });
 
       if (!response.ok) {
@@ -163,6 +164,8 @@ class PDFService {
   // 3. PDF'i indir
   async downloadPDF(jobId, fileName = 'document.pdf') {
     try {
+
+      
       const token = await this.getAuthToken();
       if (!token) {
         throw new Error('Authentication token gerekli');
@@ -179,7 +182,6 @@ class PDFService {
       }
 
       const blob = await response.blob();
-      
       // Blob'un boyutunu kontrol et
       if (blob.size === 0) {
         throw new Error('Received empty PDF file from server');
@@ -194,7 +196,7 @@ class PDFService {
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      document.body.removeChild(a);      
       
       return true;
     } catch (error) {
@@ -333,6 +335,12 @@ class PDFService {
         const courier = formData['COURIER'] || 'No-Courier';
         const safeTrackingName = `${trackingCode}_${courier}`.replace(/[^a-zA-Z0-9-_\s]/g, '').replace(/\s+/g, '-');
         return `${safeTrackingName}_${isTurkish ? 'Aski-Gonderi-Detay' : 'Hangers-Shipment-Details'}.pdf`;
+
+      case 'quality-control':
+        const qcOrderNumber = formData['Order Number'] || 'No-Order';
+        const qcClient = formData['Client'] || 'Client';
+        const safeQCName = `${qcOrderNumber}_${qcClient}`.replace(/[^a-zA-Z0-9-_\s]/g, '').replace(/\s+/g, '-');
+        return `${safeQCName}_${isTurkish ? 'Kalite-Kontrol' : 'Quality-Control'}.pdf`;
         
       default:
         return `${docType}_${timestamp}.pdf`;
