@@ -86,18 +86,28 @@ const FabricTechnicalForm = ({ selectedLanguage }) => {
       const currentInstructions = prev['CARE_INSTRUCTIONS'] || [];
       const isSelected = currentInstructions.includes(instructionId);
       
+      // Eğer seçili değilse ve zaten 7 tane varsa, uyarı ver
+      if (!isSelected && currentInstructions.length >= 7) {
+        window.confirm('7 taneden fazla yıkama talimatı seçilemez');
+        return prev;
+      }
+      
       const updatedInstructions = isSelected
         ? currentInstructions.filter(id => id !== instructionId)
         : [...currentInstructions, instructionId];
       
       console.log('Updated care instructions:', updatedInstructions);
       
+      // Hata mesajını temizle
+      if (isSelected || updatedInstructions.length < 7) {
+        setError('');
+      }
+      
       return {
         ...prev,
         'CARE_INSTRUCTIONS': updatedInstructions
       };
     });
-    setError('');
   };
 
   const handleSubmit = async (e) => {
