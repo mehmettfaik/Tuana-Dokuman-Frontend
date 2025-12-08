@@ -74,7 +74,6 @@ const FabricTechnicalForm = ({ selectedLanguage }) => {
         ...prev,
         [name]: value
       };
-      console.log('Updated form data:', updated);
       return updated;
     });
     setError('');
@@ -95,9 +94,7 @@ const FabricTechnicalForm = ({ selectedLanguage }) => {
       const updatedInstructions = isSelected
         ? currentInstructions.filter(id => id !== instructionId)
         : [...currentInstructions, instructionId];
-      
-      console.log('Updated care instructions:', updatedInstructions);
-      
+            
       // Hata mesajını temizle
       if (isSelected || updatedInstructions.length < 7) {
         setError('');

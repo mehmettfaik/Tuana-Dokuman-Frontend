@@ -289,10 +289,16 @@ const PackingListForm = ({ selectedLanguage }) => {
   // Yeni packing item ekleme
   const addPackingItem = () => {
     const newId = Math.max(...packingItems.map(item => item.id)) + 1;
+        
+    // İlk ürünün ARTICLE NUMBER ve FABRIC WEIGHT değerlerini al
+    const firstItem = packingItems[0];
+    const articleNumberValue = firstItem['ARTICLE NUMBER / COMPOSITION / CUSTOMS CODE'] || '                /                      / ';
+    const fabricWeightValue = firstItem['FABRIC WEIGHT / WIDHT'] || '';
+    
     setPackingItems(prev => [...prev, {
       id: newId,
-      'ARTICLE NUMBER / COMPOSITION / CUSTOMS CODE': '                /                      / ',
-      'FABRIC WEIGHT / WIDHT': '',
+      'ARTICLE NUMBER / COMPOSITION / CUSTOMS CODE': articleNumberValue,
+      'FABRIC WEIGHT / WIDHT': fabricWeightValue,
       'QUANTITY (METERS)': '',
       'ROLL NUMBER ROLL DIMENSIONS': '',
       'LOT': '',
