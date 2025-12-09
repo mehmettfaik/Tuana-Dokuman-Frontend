@@ -275,7 +275,11 @@ IBAN :TR02 0003 2000 0320 0000 9679 79`
           
           // Miktar ve fiyat varsa çarpma işlemi yap
           if (quantity > 0 && price > 0) {
-            updatedItem['AMOUNT'] = (quantity * price).toFixed(2);
+            const amount = quantity * price;
+            updatedItem['AMOUNT'] = amount.toLocaleString('tr-TR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+            }); 
           } else {
             updatedItem['AMOUNT'] = '';
           }
