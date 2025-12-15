@@ -82,6 +82,7 @@ const PackingListForm = ({ selectedLanguage }) => {
   const [success, setSuccess] = useState('');
   const [isGeneratingLabels, setIsGeneratingLabels] = useState(false);
   const [isOCRData, setIsOCRData] = useState(false);
+  const [isExcelGenerating, setIsExcelGenerating] = useState(false);
   
   // Yeni state'ler - Firma seçimi ve PDF yükleme için
   const [selectedCompany, setSelectedCompany] = useState('');
@@ -289,7 +290,7 @@ const PackingListForm = ({ selectedLanguage }) => {
   // Yeni packing item ekleme
   const addPackingItem = () => {
     const newId = Math.max(...packingItems.map(item => item.id)) + 1;
-        
+    
     // İlk ürünün ARTICLE NUMBER ve FABRIC WEIGHT değerlerini al
     const firstItem = packingItems[0];
     const articleNumberValue = firstItem['ARTICLE NUMBER / COMPOSITION / CUSTOMS CODE'] || '                /                      / ';
@@ -645,6 +646,85 @@ const PackingListForm = ({ selectedLanguage }) => {
     } catch (error) {
       console.error('PDF oluşturma hatası:', error);
       setError('PDF oluşturulırken hata oluştu: ' + (error.message || error.toString()));
+    }
+  };
+
+  // Excel export fonksiyonu
+  const handleExcelExport = async () => {
+    setError('');
+    setSuccess('');
+    setIsExcelGenerating(true);
+
+    try {
+      // Validation
+      if (!formData['INVOICE NUMBER']) {
+        setError('Invoice Number gereklidir!');
+        setIsExcelGenerating(false);
+        return;
+      }
+
+      // Form data ve packing items verilerini birleştir
+      const combinedData = {
+        ...formData,
+        packingItems: packingItems,
+        docType: 'packing-list',
+        formType: 'packing-list'
+      };
+
+      // API'ye istek gönder
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/pdf/generate-packing-list-excel`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
+        },
+        body: JSON.stringify({
+          formData: combinedData,
+          language: selectedLanguage
+        })
+      });
+
+      if (!response.ok) {
+        // 404 hatası - Backend endpoint henüz hazır değil
+        if (response.status === 404) {
+          throw new Error('Excel export özelliği henüz backend tarafında aktif değil. Lütfen backend ekibine bildiriniz.');
+        }
+        
+        const errorData = await response.json().catch(() => ({ error: 'Excel generation failed' }));
+        throw new Error(errorData.error || 'Excel generation failed');
+      }
+
+      // Excel dosyasını indir
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const fileName = selectedLanguage === 'tr' 
+        ? `TUANA_PACKING_LIST_${formData['INVOICE NUMBER']}.xlsx`
+        : `TUANA_PACKING_LIST_${formData['INVOICE NUMBER']}.xlsx`;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      setSuccess('Excel dosyası başarıyla indirildi!');
+      setTimeout(() => setSuccess(''), 3000);
+
+    } catch (error) {
+      console.error('Excel export hatası:', error);
+      
+      // Kullanıcı dostu hata mesajı
+      let errorMessage = error.message || error.toString();
+      
+      // Network hatası kontrolü
+      if (error.message && error.message.includes('Failed to fetch')) {
+        errorMessage = 'Backend bağlantısı kurulamadı. Lütfen backend sunucusunun çalıştığından emin olun.';
+      }
+      
+      setError(errorMessage);
+    } finally {
+      setIsExcelGenerating(false);
     }
   };
 
@@ -1099,7 +1179,7 @@ const PackingListForm = ({ selectedLanguage }) => {
           <h3 className="section-title">PAYMENT & SHIPPING DETAILS</h3>
           <div className="form-grid">
             <div className="form-group">
-  <label className="form-label">Payment Terms</label>
+             <label className="form-label">Payment Terms</label>
 
   {/* Select Menü */}
   <select
@@ -1118,9 +1198,9 @@ const PackingListForm = ({ selectedLanguage }) => {
     <option value="IMMEDIATELY">IMMEDIATELY</option>
     <option value="CASH IN ADVANCE">CASH IN ADVANCE</option>
   </select>
-
-  {/* Seçilen değer düzenlenebilir input */}
-  {formData["Payment Terms"] !== "" && (
+  
+   {/* Seçilen değer düzenlenebilir input */}
+   {formData["Payment Terms"] !== "" && (
     <input
       type="text"
       className="form-input"
@@ -1128,10 +1208,9 @@ const PackingListForm = ({ selectedLanguage }) => {
       value={formData["Payment Terms"]}
       onChange={(e) => handleInputChange("Payment Terms", e.target.value)}
       placeholder="Ödeme vadesini düzenle"
-    />
-  )}
-</div>
-            
+     />
+        )}
+         </div>            
             <div className="form-group">
               <label className="form-label">Transport Type</label>
               <select
@@ -1424,8 +1503,8 @@ const PackingListForm = ({ selectedLanguage }) => {
                       step="0.01"
                     />
                   </div>
-                </div>
-                
+                </div> 
+
                 <div className="goods-grid-row">
                   <div className="form-group">
                     <label className="form-label">ROLL NUMBER ROLL DIMENSIONS</label>
@@ -1437,7 +1516,6 @@ const PackingListForm = ({ selectedLanguage }) => {
                       placeholder="Top numarası ve ölçüleri"
                     />
                   </div>
-                  
                   <div className="form-group">
                     <label className="form-label">LOT</label>
                     <input
@@ -1493,7 +1571,7 @@ const PackingListForm = ({ selectedLanguage }) => {
             type="button"
             className="btn btn-secondary"
             onClick={handleReset}
-            disabled={isGenerating}
+            disabled={isGenerating || isExcelGenerating}
           >
             Temizle
           </button>
@@ -1501,7 +1579,7 @@ const PackingListForm = ({ selectedLanguage }) => {
           <button
             type="submit"
             className="btn btn-primary"
-            disabled={isGenerating}
+            disabled={isGenerating || isExcelGenerating}
           >
             {isGenerating ? (
               <>
@@ -1512,10 +1590,27 @@ const PackingListForm = ({ selectedLanguage }) => {
               'PDF Oluştur ve İndir'
             )}
           </button>
+          
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={handleExcelExport}
+            disabled={isGenerating || isExcelGenerating}
+            style={{ backgroundColor: '#28a745', borderColor: '#28a745' }}
+          >
+            {isExcelGenerating ? (
+              <>
+                <span className="spinner"></span>
+                Excel Oluşturuluyor...
+              </>
+            ) : (
+              'Excel Formatında İndir'
+            )}
+          </button>
         </div>
 
         {/* Loading Spinner */}
-        {isGenerating && (
+        {(isGenerating || isExcelGenerating) && (
           <div className="loading-spinner">
             <div className="spinner"></div>
           </div>
