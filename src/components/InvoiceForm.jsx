@@ -3,6 +3,7 @@ import usePDFGeneration from '../hooks/usePDFGeneration';
 import SystemStatus from './SystemStatus';
 import RecipientManager from './RecipientManager';
 import { createFormRecord, getFormRecords, getFormRecord, deleteFormRecord } from '../api';
+import { auth } from '../firebase/config';
 import '../css/ProformaInvoiceForm.css';
 
 const InvoiceForm = ({ selectedLanguage }) => {
@@ -82,6 +83,7 @@ const InvoiceForm = ({ selectedLanguage }) => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [copyRecipientToDelivery, setCopyRecipientToDelivery] = useState(false);
+  const [isExcelGenerating, setIsExcelGenerating] = useState(false);
 
   // Yeni PDF generation hook'u
   const { isGenerating, progress, error: pdfError, generatePDF: generatePDFWithHook } = usePDFGeneration();
@@ -129,7 +131,6 @@ const InvoiceForm = ({ selectedLanguage }) => {
       }
       
       if (goodsData) {
-        console.log('✅ Goods bulundu, yükleniyor:', goodsData);
         setGoods(goodsData);
       } else {
         console.warn('⚠️ Goods verisi bulunamadı');
@@ -321,13 +322,10 @@ IBAN :TR02 0003 2000 0320 0000 9679 79`
         goods: goods
       };
       
-      console.log('Gönderilen invoice data:', combinedData);
       
       // 1. Önce veriyi Firestore'a kaydet (Backend hazırsa)
       try {
-        const savedForm = await createFormRecord(combinedData, 'invoice');
-        console.log('Form Firestore\'a kaydedildi:', savedForm);
-        await loadSavedForms();
+        await createFormRecord(combinedData, 'invoice');        await loadSavedForms();
       } catch (saveError) {
         console.warn('Form kaydedilemedi (Backend henüz hazır değil):', saveError.message);
         // Backend hazır olmadığında sessizce devam et
@@ -342,6 +340,83 @@ IBAN :TR02 0003 2000 0320 0000 9679 79`
     } catch (error) {
       console.error('PDF oluşturma hatası:', error);
       setError('PDF oluşturulurken hata oluştu: ' + (error.message || error.toString()));
+    }
+  };
+
+  // Excel export fonksiyonu
+  const handleExcelExport = async () => {
+    setError('');
+    setSuccess('');
+    setIsExcelGenerating(true);
+
+    try {
+      // Validation
+      if (!formData['INVOICE NUMBER']) {
+        setError('Invoice Number gereklidir!');
+        setIsExcelGenerating(false);
+        return;
+      }
+
+      // Form data ve goods verilerini birleştir
+      const combinedData = {
+        ...formData,
+        goods: goods
+      };
+
+      // API'ye istek gönder
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/pdf/generate-invoice-excel`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
+        },
+        body: JSON.stringify({
+          formData: combinedData,
+          language: selectedLanguage
+        })
+      });
+
+      if (!response.ok) {
+        // 404 hatası - Backend endpoint henüz hazır değil
+        if (response.status === 404) {
+          throw new Error('Excel export özelliği henüz backend tarafında aktif değil. Lütfen backend ekibine bildiriniz.');
+        }
+        
+        const errorData = await response.json().catch(() => ({ error: 'Excel generation failed' }));
+        throw new Error(errorData.error || 'Excel generation failed');
+      }
+
+      // Excel dosyasını indir
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const fileName = selectedLanguage === 'tr' 
+        ? `TUANA_FATURA_${formData['INVOICE NUMBER']}.xlsx`
+        : `TUANA_INVOICE_${formData['INVOICE NUMBER']}.xlsx`;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      setSuccess('Excel dosyası başarıyla indirildi!');
+      setTimeout(() => setSuccess(''), 3000);
+
+    } catch (error) {
+      console.error('Excel export hatası:', error);
+      
+      // Kullanıcı dostu hata mesajı
+      let errorMessage = error.message || error.toString();
+      
+      // Network hatası kontrolü
+      if (error.message && error.message.includes('Failed to fetch')) {
+        errorMessage = 'Backend bağlantısı kurulamadı. Lütfen backend sunucusunun çalıştığından emin olun.';
+      }
+      
+      setError(errorMessage);
+    } finally {
+      setIsExcelGenerating(false);
     }
   };
 
@@ -858,23 +933,38 @@ IBAN :TR02 0003 2000 0320 0000 9679 79`
           <h3 className="section-title">PAYMENT & SHIPPING DETAILS</h3>
           <div className="form-grid">
             <div className="form-group">
-              <label className="form-label">Payment Terms</label>
-              <select
-                className="form-input"
-                value={formData['Payment Terms']}
-                onChange={(e) => handleInputChange('Payment Terms', e.target.value)}
-              >
-                <option value="">Ödeme vadesi seçin</option>
-                <option value="30 DAYS">30 DAYS</option>
-                <option value="60 DAYS">60 DAYS</option>
-                <option value="90 DAYS">90 DAYS</option>
-                <option value="120 DAYS">120 DAYS</option>
-                <option value="150 DAYS">150 DAYS</option>
-                <option value="180 DAYS">180 DAYS</option>
-                <option value="IMMEDIATELY">IMMEDIATELY</option>
-                <option value="CASH IN ADVANCE">CASH IN ADVANCE</option>
-              </select>
-            </div>
+  <label className="form-label">Payment Terms</label>
+
+  {/* Select Menü */}
+  <select
+    className="form-input"
+    value={formData['Payment Terms']}
+    onChange={(e) => handleInputChange('Payment Terms', e.target.value)}
+  >
+    <option value="">Ödeme vadesi seçin</option>
+    <option value=" DAYS">--Düzenlenebilir-- </option>
+    <option value="30 DAYS">30 DAYS</option>
+    <option value="60 DAYS">60 DAYS</option>
+    <option value="90 DAYS">90 DAYS</option>
+    <option value="120 DAYS">120 DAYS</option>
+    <option value="150 DAYS">150 DAYS</option>
+    <option value="180 DAYS">180 DAYS</option>
+    <option value="IMMEDIATELY">IMMEDIATELY</option>
+    <option value="CASH IN ADVANCE">CASH IN ADVANCE</option>
+  </select>
+
+  {/* Seçilen değer düzenlenebilir input */}
+  {formData["Payment Terms"] !== "" && (
+    <input
+      type="text"
+      className="form-input"
+      style={{ marginTop: "8px" }}
+      value={formData["Payment Terms"]}
+      onChange={(e) => handleInputChange("Payment Terms", e.target.value)}
+      placeholder="Ödeme vadesini düzenle"
+    />
+  )}
+</div>
             
             <div className="form-group">
               <label className="form-label">Transport Type</label>
@@ -1058,7 +1148,7 @@ IBAN :TR02 0003 2000 0320 0000 9679 79`
             type="button"
             className="btn btn-secondary"
             onClick={handleReset}
-            disabled={isGenerating}
+            disabled={isGenerating || isExcelGenerating}
           >
             Temizle
           </button>
@@ -1066,7 +1156,7 @@ IBAN :TR02 0003 2000 0320 0000 9679 79`
           <button
             type="submit"
             className="btn btn-primary"
-            disabled={isGenerating}
+            disabled={isGenerating || isExcelGenerating}
           >
             {isGenerating ? (
               <>
@@ -1077,10 +1167,27 @@ IBAN :TR02 0003 2000 0320 0000 9679 79`
               'PDF Oluştur ve İndir'
             )}
           </button>
+          
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={handleExcelExport}
+            disabled={isGenerating || isExcelGenerating}
+            style={{ backgroundColor: '#28a745', borderColor: '#28a745' }}
+          >
+            {isExcelGenerating ? (
+              <>
+                <span className="spinner"></span>
+                Excel Oluşturuluyor...
+              </>
+            ) : (
+              'Excel Formatında İndir'
+            )}
+          </button>
         </div>
 
         {/* Loading Spinner */}
-        {isGenerating && (
+        {(isGenerating || isExcelGenerating) && (
           <div className="loading-spinner" style={{
             display: 'flex',
             justifyContent: 'center',
