@@ -22,6 +22,9 @@ const ProformaInvoiceForm = ({ selectedLanguage }) => {
   };
 
   const [formData, setFormData] = useState({
+    // Proforma Invoice specific field
+    'INVOICE DATE': new Date().toISOString().split('T')[0],
+    
     // Responsible Person
     'RESPONSIBLE PERSON': '',
     'TELEPHONE': '',
@@ -571,6 +574,23 @@ IBAN :TR02 0003 2000 0320 0000 9679 79`
       </div>
 
       <form onSubmit={handleSubmit} className="proforma-form">
+        {/* Invoice Date Section */}
+        <div className="form-section">
+          <h3 className="section-title">INVOICE INFORMATION</h3>
+          <div className="form-grid">
+            <div className="form-group">
+              <label className="form-label">INVOICE DATE</label>
+              <input
+                type="date"
+                className="form-input"
+                value={formData['INVOICE DATE']}
+                onChange={(e) => handleInputChange('INVOICE DATE', e.target.value)}
+                required
+              />
+            </div>
+          </div>
+        </div>
+
         {/* Responsible Person Section */}
         <div className="form-section">
           <h3 className="section-title">RESPONSIBLE PERSON</h3>

@@ -33,6 +33,7 @@ const PackingListForm = ({ selectedLanguage }) => {
   const [formData, setFormData] = useState({
     // Invoice Information
     'INVOICE NUMBER': '',
+    'INVOICE DATE': new Date().toISOString().split('T')[0],
 
     // Responsible Person
     'RESPONSIBLE PERSON': '',
@@ -916,6 +917,16 @@ const PackingListForm = ({ selectedLanguage }) => {
                 value={formData['INVOICE NUMBER']}
                 onChange={(e) => handleInputChange('INVOICE NUMBER', e.target.value)}
                 placeholder="Fatura numarası"
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">INVOICE DATE</label>
+              <input
+                type="date"
+                className="form-input"
+                value={formData['INVOICE DATE']}
+                onChange={(e) => handleInputChange('INVOICE DATE', e.target.value)}
                 required
               />
             </div>

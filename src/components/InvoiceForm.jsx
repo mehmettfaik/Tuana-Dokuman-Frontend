@@ -24,6 +24,7 @@ const InvoiceForm = ({ selectedLanguage }) => {
   const [formData, setFormData] = useState({
     // Invoice specific field
     'INVOICE NUMBER': '',
+    'INVOICE DATE': new Date().toISOString().split('T')[0],
     
     // Responsible Person
     'RESPONSIBLE PERSON': '',
@@ -549,6 +550,16 @@ IBAN :TR02 0003 2000 0320 0000 9679 79`
                 value={formData['INVOICE NUMBER']}
                 onChange={(e) => handleInputChange('INVOICE NUMBER', e.target.value)}
                 placeholder="Fatura numarası giriniz"
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">INVOICE DATE</label>
+              <input
+                type="date"
+                className="form-input"
+                value={formData['INVOICE DATE']}
+                onChange={(e) => handleInputChange('INVOICE DATE', e.target.value)}
                 required
               />
             </div>
