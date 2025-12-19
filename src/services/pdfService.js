@@ -264,9 +264,8 @@ class PDFService {
     
     switch (docType) {
       case 'proforma-invoice':
-        const proformaNumber = formData['PROFORMA INVOICE NUMBER'] || 'Proforma';
         const proformaCompany = formData['RECIPIENT Şirket Adı'] || 'Company';
-        const safeProformaName = `${proformaNumber}_${proformaCompany}`.replace(/[^a-zA-Z0-9-_\s]/g, '').replace(/\s+/g, '-');
+        const safeProformaName = `${proformaCompany}`.replace(/[^a-zA-Z0-9-_\s]/g, '').replace(/\s+/g, '-');
         return `${safeProformaName}_${isTurkish ? 'Proforma-Fatura' : 'Proforma-Invoice'}.pdf`;
         
       case 'invoice':
