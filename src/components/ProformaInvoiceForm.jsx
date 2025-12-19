@@ -283,8 +283,18 @@ IBAN :TR02 0003 2000 0320 0000 9679 79`
 
   // Sayıyı Türkiye/Avrupa formatına çevirme fonksiyonu
   const formatNumber = (value) => {
-    if (!value) return '';
-    const num = parseFloat(value);
+    if (!value && value !== 0) return '';
+    
+    // Eğer value zaten bir sayı ise direkt kullan, değilse parse et
+    let num;
+    if (typeof value === 'number') {
+      num = value;
+    } else {
+      // String ise önce temizle (binlik ayırıcıları kaldır, virgülü noktaya çevir)
+      const cleaned = value.toString().replace(/\./g, '').replace(',', '.');
+      num = parseFloat(cleaned);
+    }
+    
     if (isNaN(num)) return value;
     
     // Sayıyı binlik ayırıcı ile formatla (nokta) ve ondalık ayırıcı olarak virgül kullan
