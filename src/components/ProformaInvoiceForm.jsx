@@ -273,6 +273,27 @@ IBAN :TR02 0003 2000 0320 0000 9679 79`
     return bankInfos[currency] || '';
   };
 
+  // Sayı parsing yardımcı fonksiyonu - hem nokta hem virgülü destekler
+  const parseNumber = (value) => {
+    if (!value) return 0;
+    // Virgülü noktaya çevir (Avrupa formatı desteği için)
+    const normalized = value.toString().replace(',', '.');
+    return parseFloat(normalized) || 0;
+  };
+
+  // Sayıyı Türkiye/Avrupa formatına çevirme fonksiyonu
+  const formatNumber = (value) => {
+    if (!value) return '';
+    const num = parseFloat(value);
+    if (isNaN(num)) return value;
+    
+    // Sayıyı binlik ayırıcı ile formatla (nokta) ve ondalık ayırıcı olarak virgül kullan
+    return num.toLocaleString('tr-TR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  };
+
   // Ürün verilerini güncelleme
   const handleGoodsChange = (id, field, value) => {
     setGoods(prev => prev.map(item => {
@@ -281,12 +302,13 @@ IBAN :TR02 0003 2000 0320 0000 9679 79`
         
         // QUANTITY veya PRICE değiştiğinde AMOUNT'u otomatik hesapla
         if (field === 'QUANTITY (METERS)' || field === 'PRICE') {
-          const quantity = parseFloat(field === 'QUANTITY (METERS)' ? value : updatedItem['QUANTITY (METERS)']) || 0;
-          const price = parseFloat(field === 'PRICE' ? value : updatedItem['PRICE']) || 0;
+          const quantity = parseNumber(field === 'QUANTITY (METERS)' ? value : updatedItem['QUANTITY (METERS)']);
+          const price = parseNumber(field === 'PRICE' ? value : updatedItem['PRICE']);
           
           // Miktar ve fiyat varsa çarpma işlemi yap
           if (quantity > 0 && price > 0) {
-            updatedItem['AMOUNT'] = (quantity * price).toFixed(2);
+            const amount = quantity * price;
+            updatedItem['AMOUNT'] = formatNumber(amount);
           } else {
             updatedItem['AMOUNT'] = '';
           }
