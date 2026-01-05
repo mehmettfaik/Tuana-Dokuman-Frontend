@@ -10,6 +10,7 @@ const SelectDocument = ({ selectedDocType, setSelectedDocType }) => {
         onChange={(e) => setSelectedDocType(e.target.value)}
       >
         <option value="">BELGE SEÇİNİZ</option>
+        <option value="cekiListesi">ÇEKİ LİSTESİ</option>
         <option value="teknikFoy">TECHNICAL SHEET</option>
         <option value="proformaInvoice">PROFORMA INVOICE</option>
         <option value="invoice">INVOICE</option>

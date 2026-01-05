@@ -340,6 +340,12 @@ class PDFService {
         const qcClient = formData['Client'] || 'Client';
         const safeQCName = `${qcOrderNumber}_${qcClient}`.replace(/[^a-zA-Z0-9-_\s]/g, '').replace(/\s+/g, '-');
         return `${safeQCName}_${isTurkish ? 'Kalite-Kontrol' : 'Quality-Control'}.pdf`;
+
+      case 'ceki-listesi':
+        const cekiFormData = formData.formData || formData;
+        const cekiCompany = cekiFormData.musteriAdi || cekiFormData['musteriAdi'] || 'Firma';
+        const safeCekiCompany = cekiCompany.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '-');
+        return `${safeCekiCompany}_Ceki-Listesi.pdf`;
         
       default:
         return `${docType}_${timestamp}.pdf`;

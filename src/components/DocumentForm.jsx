@@ -11,7 +11,8 @@ import OrderConfirmationForm from './OrderConfirmationForm';
 import SiparisForm from './SiparisForm'; 
 import PriceOfferForm from './PriceOfferForm';
 import HangersShipmentForm from './HangersShipmentForm';
-import QualityControlForm from './QualityControlForm'; 
+import QualityControlForm from './QualityControlForm';
+import CekiListesiForm from './CekiListesiForm'; 
 
 const fieldMap = {
   fiyatTeklif: [
@@ -80,6 +81,11 @@ const DocumentForm = ({ selectedDocType, selectedLanguage }) => {
   // Eğer quality control seçilmişse, özel form komponentini göster
   if (selectedDocType === 'qualityControl') {
     return <QualityControlForm selectedLanguage={selectedLanguage} />;
+  }
+
+  // Eğer çeki listesi seçilmişse, özel form komponentini göster
+  if (selectedDocType === 'cekiListesi') {
+    return <CekiListesiForm selectedLanguage={selectedLanguage} />;
   }
 
   const handleChange = (e, fieldName) => {
