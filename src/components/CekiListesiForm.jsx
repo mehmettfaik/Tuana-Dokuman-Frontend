@@ -118,27 +118,21 @@ const CekiListesiForm = ({ selectedLanguage }) => {
     ));
   };
 
-  // Klavye ile navigasyon (Enter ile sonraki satıra)
+  // Klavye ile navigasyon (Enter ile aynı sütunda alt satıra geç)
   const handleKeyDown = (e, rowIndex, field) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       
-      // Sonraki hücreye geç
-      if (field === 'metre') {
-        const nextInput = document.querySelector(`[data-row="${rowIndex}"][data-field="lot"]`);
-        if (nextInput) nextInput.focus();
-      } else if (field === 'lot') {
-        // Sonraki satıra geç, yoksa yeni satır ekle
-        if (rowIndex === rows.length - 1) {
-          addRow();
-          setTimeout(() => {
-            const nextInput = document.querySelector(`[data-row="${rowIndex + 1}"][data-field="metre"]`);
-            if (nextInput) nextInput.focus();
-          }, 50);
-        } else {
-          const nextInput = document.querySelector(`[data-row="${rowIndex + 1}"][data-field="metre"]`);
+      // Aynı sütunda bir alt satıra geç, son satırdaysa yeni satır ekle
+      if (rowIndex === rows.length - 1) {
+        addRow();
+        setTimeout(() => {
+          const nextInput = document.querySelector(`[data-row="${rowIndex + 1}"][data-field="${field}"]`);
           if (nextInput) nextInput.focus();
-        }
+        }, 50);
+      } else {
+        const nextInput = document.querySelector(`[data-row="${rowIndex + 1}"][data-field="${field}"]`);
+        if (nextInput) nextInput.focus();
       }
     } else if (e.key === 'Tab' && !e.shiftKey && field === 'lot' && rowIndex === rows.length - 1) {
       e.preventDefault();
