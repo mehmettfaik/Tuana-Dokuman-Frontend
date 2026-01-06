@@ -159,15 +159,14 @@ const CekiListesiForm = ({ selectedLanguage }) => {
         return;
       }
 
+      // API iki parametre bekliyor: (formData, formType)
       await createFormRecord({
-        formType: 'ceki-listesi',
-        formData,
+        ...formData,
         rows,
         language: selectedLanguage,
-        createdAt: new Date().toISOString(),
         userId: user.uid,
         userEmail: user.email
-      });
+      }, 'ceki-listesi');
 
       setSuccess('Kaydedildi!');
       loadSavedForms();
@@ -242,27 +241,31 @@ const CekiListesiForm = ({ selectedLanguage }) => {
       {success && <div className="msg success">{success}</div>}
       {pdfError && <div className="msg error">{pdfError}</div>}
 
-      {/* Geçmiş Belgeler */}
-      {loadingForms ? (
-        <div className="saved-section">
-          <p>Yükleniyor...</p>
-        </div>
-      ) : savedForms.length > 0 && (
-        <div className="saved-section">
-          <h4>📁 Kayıtlı Belgeler</h4>
-          <div className="saved-list">
-            {savedForms.map(form => (
-              <div key={form.id} className={`saved-item ${selectedFormId === form.id ? 'active' : ''}`}>
-                <span>{form.formData?.musteriAdi || 'İsimsiz'} - {new Date(form.createdAt).toLocaleDateString('tr-TR')}</span>
-                <div>
-                  <button onClick={() => handleLoad(form.id)} className="btn-sm">Yükle</button>
-                  <button onClick={() => handleDelete(form.id)} className="btn-sm del">Sil</button>
+      {/* GEÇMİŞ BELGELER LİSTESİ */}
+      <div className="saved-forms-section">
+        <h3>Geçmiş Belgeler</h3>
+        {loadingForms && <div className="loading-indicator"><span className="spinner"></span> Belgeler yükleniyor...</div>}
+        {!loadingForms && savedForms.length === 0 && <p className="no-forms-message">Henüz kaydedilmiş çeki listesi bulunmuyor.</p>}
+        {!loadingForms && savedForms.length > 0 && (
+          <div className="saved-forms-list">
+            {savedForms.map((form) => (
+              <div key={form.id} className={`saved-form-item ${selectedFormId === form.id ? 'selected' : ''}`} onClick={() => handleLoad(form.id)}>
+                <div className="form-item-header">
+                  <div className="form-item-info">
+                    <strong>{form.formData?.musteriAdi || 'İsimsiz'}</strong>
+                    <span className="form-item-date">{new Date(form.createdAt).toLocaleDateString('tr-TR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                  </div>
+                  <button className="btn-delete-small" onClick={(e) => { e.stopPropagation(); handleDelete(form.id); }} title="Belgeyi Sil">✕</button>
+                </div>
+                <div className="form-item-details">
+                  <span>Fatura No: {form.formData?.faturaNo || 'N/A'}</span>
+                  <span>Artikel: {form.formData?.artikelKodu || 'N/A'}</span>
                 </div>
               </div>
             ))}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Üst Bilgiler */}
       <div className="info-grid">
@@ -387,6 +390,7 @@ const CekiListesiForm = ({ selectedLanguage }) => {
       {/* Butonlar */}
       <div className="actions">
         <button onClick={handleReset} className="btn reset">Sıfırla</button>
+        <button onClick={handleSave} className="btn save">Kaydet</button>
         <button onClick={handleGeneratePDF} className="btn pdf" disabled={isGenerating}>
           {isGenerating ? `${progress}` : 'PDF Oluştur'}
         </button>
