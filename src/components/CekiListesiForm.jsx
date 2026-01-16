@@ -33,6 +33,7 @@ const CekiListesiForm = ({ selectedLanguage }) => {
   // UI state'leri
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [isGeneratingLabels, setIsGeneratingLabels] = useState(false);
   
   // PDF generation hook
   const { isGenerating, progress, error: pdfError, generatePDF: generatePDFWithHook } = usePDFGeneration();
@@ -233,6 +234,57 @@ const CekiListesiForm = ({ selectedLanguage }) => {
     }
   };
 
+  // Etiket Oluştur
+  const handleGenerateLabels = async () => {
+    try {
+      setIsGeneratingLabels(true);
+      setError('');
+      
+      const user = auth.currentUser;
+      if (!user) {
+        setError('Oturum açmanız gerekiyor.');
+        return;
+      }
+
+      const token = await user.getIdToken();
+      
+      const response = await fetch('/api/pdf/ceki-listesi-labels', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          ...formData,
+          rows,
+          language: selectedLanguage
+        })
+      });
+
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `ceki-listesi-etiketleri-${Date.now()}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        setSuccess('Etiketler oluşturuldu!');
+        setTimeout(() => setSuccess(''), 3000);
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        setError(errorData.message || 'Etiket oluşturma hatası.');
+      }
+    } catch (err) {
+      console.error('Etiket oluşturma hatası:', err);
+      setError('Etiket oluşturma hatası: ' + err.message);
+    } finally {
+      setIsGeneratingLabels(false);
+    }
+  };
+
   return (
     <div className="ceki-form">
       <h2>ÇEKİ LİSTESİ</h2>
@@ -393,6 +445,9 @@ const CekiListesiForm = ({ selectedLanguage }) => {
         <button onClick={handleSave} className="btn save">Kaydet</button>
         <button onClick={handleGeneratePDF} className="btn pdf" disabled={isGenerating}>
           {isGenerating ? `${progress}` : 'PDF Oluştur'}
+        </button>
+        <button onClick={handleGenerateLabels} className="btn label" disabled={isGeneratingLabels}>
+          {isGeneratingLabels ? 'Oluşturuluyor...' : 'Etiket Oluştur'}
         </button>
       </div>
     </div>
