@@ -247,8 +247,9 @@ const CekiListesiForm = ({ selectedLanguage }) => {
       }
 
       const token = await user.getIdToken();
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
       
-      const response = await fetch('/api/pdf/ceki-listesi-labels', {
+      const response = await fetch(`${apiUrl}/api/pdf/ceki-listesi-labels`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
