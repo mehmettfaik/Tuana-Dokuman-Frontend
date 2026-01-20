@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import usePDFGeneration from '../hooks/usePDFGeneration';
 import RecipientManager from './RecipientManager';
 import { createFormRecord, getFormRecords, getFormRecord, deleteFormRecord } from '../api';
@@ -79,6 +79,8 @@ const PackingListForm = ({ selectedLanguage }) => {
     }
   ]);
 
+  const tableRef = useRef(null);
+
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isGeneratingLabels, setIsGeneratingLabels] = useState(false);
@@ -152,7 +154,51 @@ const PackingListForm = ({ selectedLanguage }) => {
       }
       
       if (itemsData) {
-        setPackingItems(itemsData);
+        // Sayıları temizleyen yardımcı fonksiyon
+        const cleanNumericValue = (value) => {
+          if (!value) return '';
+          
+          // String'e çevir
+          let cleaned = String(value).trim();
+          
+          // "39 MT", "7,558 KG" gibi değerlerden sadece sayısal kısmı al
+          // Virgülü noktaya çevir (Türkçe format -> İngilizce format)
+          cleaned = cleaned
+            .replace(/[^\d,.-]/g, '') // Sadece rakam, virgül, nokta ve eksi işareti kalsın
+            .replace(',', '.') // Virgülü noktaya çevir
+            .trim();
+          
+          return cleaned;
+        };
+        
+        // Her item için field isimlerini TAM OLARAK doğru şekilde map et
+        const mappedItems = itemsData.map((item, index) => {
+          
+          // Field isimlerini TAM OLARAK database'deki gibi kullan
+          const mappedItem = {
+            id: Date.now() + index,
+            'ARTICLE NUMBER / COMPOSITION / CUSTOMS CODE': 
+              item['ARTICLE NUMBER / COMPOSITION / CUSTOMS CODE'] || '',
+            'FABRIC WEIGHT / WIDHT': 
+              item['FABRIC WEIGHT / WIDHT'] || '',
+            'QUANTITY (METERS)': 
+              cleanNumericValue(item['QUANTITY (METERS)']),
+            'ROLL NUMBER ROLL DIMENSIONS': 
+              item['ROLL NUMBER ROLL DIMENSIONS'] || '',
+            'LOT': 
+              item['LOT'] || '',
+            'GROSS WEIGHT(KG)': 
+              cleanNumericValue(item['GROSS WEIGHT(KG)']),
+            'NET WEIGHT (KG)': 
+              cleanNumericValue(item['NET WEIGHT (KG)'])
+          };
+          
+         
+          return mappedItem;
+        });
+        
+       
+        setPackingItems(mappedItems);
       } else {
         console.warn('⚠️ Packing Items verisi bulunamadı');
       }
@@ -315,6 +361,48 @@ const PackingListForm = ({ selectedLanguage }) => {
       setPackingItems(prev => prev.filter(item => item.id !== id));
     }
   };
+
+  // Klavye ile navigasyon (Enter ile aynı sütunda alt satıra geç)
+  const handleKeyDown = (e, rowIndex, field) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      
+      // Aynı sütunda bir alt satıra geç, son satırdaysa yeni satır ekle
+      if (rowIndex === packingItems.length - 1) {
+        addPackingItem();
+        setTimeout(() => {
+          const nextInput = document.querySelector(`[data-row="${rowIndex + 1}"][data-field="${field}"]`);
+          if (nextInput) nextInput.focus();
+        }, 50);
+      } else {
+        const nextInput = document.querySelector(`[data-row="${rowIndex + 1}"][data-field="${field}"]`);
+        if (nextInput) nextInput.focus();
+      }
+    } else if (e.key === 'Tab' && !e.shiftKey && field === 'netWeight' && rowIndex === packingItems.length - 1) {
+      e.preventDefault();
+      addPackingItem();
+      setTimeout(() => {
+        const nextInput = document.querySelector(`[data-row="${rowIndex + 1}"][data-field="article"]`);
+        if (nextInput) nextInput.focus();
+      }, 50);
+    }
+  };
+
+  // Toplam hesaplamaları
+  const totalQuantity = packingItems.reduce((sum, item) => {
+    const val = parseFloat(item['QUANTITY (METERS)']);
+    return sum + (isNaN(val) ? 0 : val);
+  }, 0);
+
+  const totalGrossWeight = packingItems.reduce((sum, item) => {
+    const val = parseFloat(item['GROSS WEIGHT(KG)']);
+    return sum + (isNaN(val) ? 0 : val);
+  }, 0);
+
+  const totalNetWeight = packingItems.reduce((sum, item) => {
+    const val = parseFloat(item['NET WEIGHT (KG)']);
+    return sum + (isNaN(val) ? 0 : val);
+  }, 0);
 
   // Ürün etiketleri oluşturma fonksiyonu
   const handleCreateProductLabels = async () => {
@@ -1451,130 +1539,134 @@ const PackingListForm = ({ selectedLanguage }) => {
                   <> Etiket Oluştur</>
                 )}
               </button>
-              <button
-                type="button"
-                className="btn btn-add-goods"
-                onClick={addPackingItem}
-              >
-                + Yeni Ürün Ekle
-              </button>
             </div>
           </div>
           
-          {packingItems.map((item, index) => (
-            <div key={item.id} className="goods-item">
-              <div className="goods-item-header">
-                <h4 className="goods-item-title">Ürün #{index + 1}</h4>
-                {packingItems.length > 1 && (
-                  <button
-                    type="button"
-                    className="btn btn-remove-goods"
-                    onClick={() => removePackingItem(item.id)}
-                  >
-                    × Sil
-                  </button>
-                )}
-              </div>
-              
-              <div className="goods-container">
-                <div className="goods-grid-row">
-                  <div className="form-group">
-                  <label className="form-label">
-                  ARTICLE NUMBER / COMPOSITION / CUSTOMS CODE{" "}
-                 <span style={{ color: 'red' }}>*-her bilgi arasında "/" işareti kullan!</span>
-                  </label>
-                    <textarea
-                      className="form-textarea"
-                      value={item['ARTICLE NUMBER / COMPOSITION / CUSTOMS CODE']}
-                      onChange={(e) => handlePackingItemChange(item.id, 'ARTICLE NUMBER / COMPOSITION / CUSTOMS CODE', e.target.value)}
-                      placeholder="Ürün numarası / Kompozisyon / Gümrük kodu"
-                      rows="2"
-                    />
-                  </div>
-                  
-                  <div className="form-group">
-                    <label className="form-label">FABRIC WEIGHT / WIDHT</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      value={item['FABRIC WEIGHT / WIDHT']}
-                      onChange={(e) => handlePackingItemChange(item.id, 'FABRIC WEIGHT / WIDHT', e.target.value)}
-                      placeholder="Kumaş ağırlığı / Genişlik"
-                    />
-                  </div>
-                  
-                  <div className="form-group">
-                    <label className="form-label">QUANTITY (METERS)</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      value={item['QUANTITY (METERS)']}
-                      onChange={(e) => handlePackingItemChange(item.id, 'QUANTITY (METERS)', e.target.value)}
-                      placeholder="Miktar (metre)"
-                      step="0.01"
-                    />
-                  </div>
-                </div> 
-
-                <div className="goods-grid-row">
-                  <div className="form-group">
-                    <label className="form-label">ROLL NUMBER ROLL DIMENSIONS</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      value={item['ROLL NUMBER ROLL DIMENSIONS']}
-                      onChange={(e) => handlePackingItemChange(item.id, 'ROLL NUMBER ROLL DIMENSIONS', e.target.value)}
-                      placeholder="Top numarası ve ölçüleri"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">LOT</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      value={item['LOT']}
-                      onChange={(e) => handlePackingItemChange(item.id, 'LOT', e.target.value)}
-                      placeholder="Lot numarası"
-                    />
-                  </div>
-                </div>
-                
-                <div className="goods-grid-row">
-                  <div className="form-group">
-                    <label className="form-label">GROSS WEIGHT(KG)</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      value={item['GROSS WEIGHT(KG)'] || ''}
-                      onChange={(e) => {
-                        handlePackingItemChange(item.id, 'GROSS WEIGHT(KG)', e.target.value);
-                      }}
-                      placeholder="Brüt ağırlık (kg)"
-                      step="0.01"
-                      onFocus={() => {
-                      }}
-                    />
-                  </div>
-                  
-                  <div className="form-group">
-                    <label className="form-label">NET WEIGHT (KG)</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      value={item['NET WEIGHT (KG)'] || ''}
-                      onChange={(e) => {
-                        handlePackingItemChange(item.id, 'NET WEIGHT (KG)', e.target.value);
-                      }}
-                      placeholder="Net ağırlık (kg)"
-                      step="0.01"
-                      onFocus={() => {
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
+          {/* Excel Tablo */}
+          <div className="excel-section">
+            <table className="packing-excel" ref={tableRef}>
+              <thead>
+                <tr>
+                  <th className="col-no">#</th>
+                  <th className="col-article">Article / Composition / Customs</th>
+                  <th className="col-fabric">Fabric Weight/Width</th>
+                  <th className="col-quantity">Quantity (m)</th>
+                  <th className="col-roll">Roll No/Dim</th>
+                  <th className="col-lot">Lot</th>
+                  <th className="col-gross">Gross (kg)</th>
+                  <th className="col-net">Net (kg)</th>
+                  <th className="col-del"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {packingItems.map((item, idx) => (
+                  <tr key={item.id}>
+                    <td className="cell-no">{idx + 1}</td>
+                    <td className="cell-article">
+                      <textarea
+                        value={item['ARTICLE NUMBER / COMPOSITION / CUSTOMS CODE']}
+                        onChange={(e) => handlePackingItemChange(item.id, 'ARTICLE NUMBER / COMPOSITION / CUSTOMS CODE', e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            handleKeyDown(e, idx, 'article');
+                          }
+                        }}
+                        data-row={idx}
+                        data-field="article"
+                        placeholder="Article / Comp / Code"
+                        rows="1"
+                      />
+                    </td>
+                    <td className="cell">
+                      <input
+                        type="text"
+                        value={item['FABRIC WEIGHT / WIDHT']}
+                        onChange={(e) => handlePackingItemChange(item.id, 'FABRIC WEIGHT / WIDHT', e.target.value)}
+                        onKeyDown={(e) => handleKeyDown(e, idx, 'fabric')}
+                        data-row={idx}
+                        data-field="fabric"
+                        placeholder="Weight/Width"
+                      />
+                    </td>
+                    <td className="cell">
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={item['QUANTITY (METERS)']}
+                        onChange={(e) => handlePackingItemChange(item.id, 'QUANTITY (METERS)', e.target.value)}
+                        onKeyDown={(e) => handleKeyDown(e, idx, 'quantity')}
+                        data-row={idx}
+                        data-field="quantity"
+                        placeholder="0.00"
+                      />
+                    </td>
+                    <td className="cell">
+                      <input
+                        type="text"
+                        value={item['ROLL NUMBER ROLL DIMENSIONS']}
+                        onChange={(e) => handlePackingItemChange(item.id, 'ROLL NUMBER ROLL DIMENSIONS', e.target.value)}
+                        onKeyDown={(e) => handleKeyDown(e, idx, 'roll')}
+                        data-row={idx}
+                        data-field="roll"
+                        placeholder="Roll No"
+                      />
+                    </td>
+                    <td className="cell">
+                      <input
+                        type="text"
+                        value={item['LOT']}
+                        onChange={(e) => handlePackingItemChange(item.id, 'LOT', e.target.value)}
+                        onKeyDown={(e) => handleKeyDown(e, idx, 'lot')}
+                        data-row={idx}
+                        data-field="lot"
+                        placeholder="Lot"
+                      />
+                    </td>
+                    <td className="cell">
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={item['GROSS WEIGHT(KG)'] || ''}
+                        onChange={(e) => handlePackingItemChange(item.id, 'GROSS WEIGHT(KG)', e.target.value)}
+                        onKeyDown={(e) => handleKeyDown(e, idx, 'grossWeight')}
+                        data-row={idx}
+                        data-field="grossWeight"
+                        placeholder="0.00"
+                      />
+                    </td>
+                    <td className="cell">
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={item['NET WEIGHT (KG)'] || ''}
+                        onChange={(e) => handlePackingItemChange(item.id, 'NET WEIGHT (KG)', e.target.value)}
+                        onKeyDown={(e) => handleKeyDown(e, idx, 'netWeight')}
+                        data-row={idx}
+                        data-field="netWeight"
+                        placeholder="0.00"
+                      />
+                    </td>
+                    <td className="cell-del">
+                      <button type="button" onClick={() => removePackingItem(item.id)} title="Sil">×</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td className="foot-label" colSpan="3">Toplam:</td>
+                  <td className="foot-total">{totalQuantity.toFixed(2)} m</td>
+                  <td></td>
+                  <td></td>
+                  <td className="foot-total">{totalGrossWeight.toFixed(2)} kg</td>
+                  <td className="foot-total">{totalNetWeight.toFixed(2)} kg</td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            </table>
+            <button type="button" onClick={addPackingItem} className="btn-add">+ Satır Ekle</button>
+            <p className="hint">Enter tuşuyla sonraki hücreye geçin. Son satırda Enter ile yeni satır eklenir.</p>
+          </div>
         </div>
 
         <div className="form-actions">

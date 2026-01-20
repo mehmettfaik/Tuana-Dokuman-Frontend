@@ -232,3 +232,210 @@
     transform: rotate(360deg);
   }
 }
+
+/* ============================================
+   EXCEL TABLO STİLLERİ - PACKING LIST
+   ============================================ */
+.excel-section {
+  margin-bottom: 20px;
+}
+
+/* Excel Tablo */
+.packing-excel {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  background: #fff;
+}
+
+.packing-excel thead {
+  background: #333;
+}
+
+.packing-excel thead th {
+  padding: 10px 6px;
+  color: #fff;
+  font-weight: 600;
+  text-align: center;
+  border: 1px solid #222;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+/* Sütun genişlikleri */
+.packing-excel .col-no { width: 25px; }
+.packing-excel .col-article { width: 29%; }
+.packing-excel .col-fabric { width: 11%; }
+.packing-excel .col-quantity { width: 7%; }
+.packing-excel .col-roll { width: 14%; }
+.packing-excel .col-lot { width: 10%; }
+.packing-excel .col-gross { width: 7%; }
+.packing-excel .col-net { width: 7%; }
+.packing-excel .col-del { width: 20px; }
+
+.packing-excel tbody tr:nth-child(even) {
+  background: #f9f9f9;
+}
+
+.packing-excel tbody tr:hover {
+  background: #f0f0f0;
+}
+
+.packing-excel .cell-no {
+  text-align: center;
+  background: #e8e8e8;
+  color: #666;
+  font-weight: 600;
+  border: 1px solid #ccc;
+  padding: 0;
+}
+
+.packing-excel .cell {
+  padding: 0;
+  border: 1px solid #ccc;
+}
+
+.packing-excel .cell input {
+  width: 100%;
+  padding: 8px 6px;
+  border: none;
+  font-size: 12px;
+  text-align: center;
+  box-sizing: border-box;
+  background: transparent;
+}
+
+.packing-excel .cell input:focus {
+  outline: 2px solid #333;
+  outline-offset: -2px;
+  background: #fff;
+}
+
+/* Article sütunu için textarea stili */
+.packing-excel .cell-article {
+  padding: 0;
+  border: 1px solid #ccc;
+  vertical-align: top;
+}
+
+.packing-excel .cell-article textarea {
+  width: 100%;
+  min-height: 36px;
+  padding: 8px 6px;
+  border: none;
+  font-size: 12px;
+  text-align: left;
+  box-sizing: border-box;
+  background: transparent;
+  resize: none;
+  font-family: inherit;
+  line-height: 1.3;
+  overflow: hidden;
+}
+
+.packing-excel .cell-article textarea:focus {
+  outline: 2px solid #333;
+  outline-offset: -2px;
+  background: #fff;
+  min-height: 60px;
+  overflow: auto;
+}
+
+.packing-excel .cell input[type="number"] {
+  -moz-appearance: textfield;
+}
+.packing-excel .cell input[type="number"]::-webkit-outer-spin-button,
+.packing-excel .cell input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.packing-excel .cell-del {
+  text-align: center;
+  border: 1px solid #ccc;
+  padding: 0;
+  width: 20px;
+}
+
+.packing-excel .cell-del button {
+  width: 100%;
+  height: 100%;
+  padding: 3px;
+  border: none;
+  background: transparent;
+  color: #c00;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.packing-excel .cell-del button:hover {
+  background: #fee;
+}
+
+/* Footer */
+.packing-excel tfoot {
+  background: #333;
+}
+
+.packing-excel tfoot td {
+  padding: 10px 6px;
+  color: #fff;
+  font-weight: 600;
+  border: 1px solid #222;
+}
+
+.packing-excel .foot-label {
+  text-align: right;
+  padding-right: 10px !important;
+}
+
+.packing-excel .foot-total {
+  text-align: center;
+  font-size: 12px;
+}
+
+/* Satır Ekle Butonu */
+.btn-add {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  margin-top: 0;
+  background: #f0f0f0;
+  border: 1px dashed #999;
+  border-top: none;
+  color: #333;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 0 0 4px 4px;
+}
+
+.btn-add:hover {
+  background: #e0e0e0;
+  border-color: #333;
+}
+
+/* İpucu */
+.hint {
+  margin-top: 10px;
+  font-size: 12px;
+  color: #888;
+}
+
+/* Responsive - Excel Tablo */
+@media (max-width: 768px) {
+  .packing-excel {
+    font-size: 11px;
+  }
+  
+  .packing-excel thead th {
+    padding: 8px 4px;
+    font-size: 10px;
+  }
+  
+  .packing-excel .cell input {
+    padding: 6px 4px;
+    font-size: 11px;
+  }
+}
