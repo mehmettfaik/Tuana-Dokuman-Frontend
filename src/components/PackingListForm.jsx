@@ -63,6 +63,9 @@ const PackingListForm = ({ selectedLanguage }) => {
     'Transport Type': '',
     'Country of Origin': '',
     
+    // İmza ve Kaşe
+    'İmza ve Kaşe': false,
+    
   });
 
   // Packing List Items - Farklı tablo yapısı
@@ -1666,6 +1669,22 @@ const PackingListForm = ({ selectedLanguage }) => {
             </table>
             <button type="button" onClick={addPackingItem} className="btn-add">+ Satır Ekle</button>
             <p className="hint">Enter tuşuyla sonraki hücreye geçin. Son satırda Enter ile yeni satır eklenir.</p>
+          </div>
+        </div>
+
+        {/* İmza ve Kaşe Checkbox */}
+        <div className="form-section" style={{ marginTop: '20px' }}>
+          <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <input
+              type="checkbox"
+              id="imza-kase"
+              checked={formData['İmza ve Kaşe']}
+              onChange={(e) => handleInputChange('İmza ve Kaşe', e.target.checked)}
+              style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+            />
+            <label htmlFor="imza-kase" style={{ cursor: 'pointer', fontSize: '16px', fontWeight: '500' }}>
+              İmza ve Kaşe
+            </label>
           </div>
         </div>
 

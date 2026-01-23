@@ -23,7 +23,8 @@ const FabricTechnicalForm = ({ selectedLanguage }) => {
     'NOTE_3': '',
     'ISSUED BY': '',
     'RESPONSIBLE TECHNICIAN': '',
-    'CARE_INSTRUCTIONS': []
+    'CARE_INSTRUCTIONS': [],
+    'İmza ve Kaşe': false
   });
 
   const [error, setError] = useState('');
@@ -94,7 +95,7 @@ const FabricTechnicalForm = ({ selectedLanguage }) => {
       const updatedInstructions = isSelected
         ? currentInstructions.filter(id => id !== instructionId)
         : [...currentInstructions, instructionId];
-            
+      
       // Hata mesajını temizle
       if (isSelected || updatedInstructions.length < 7) {
         setError('');
@@ -398,6 +399,22 @@ const FabricTechnicalForm = ({ selectedLanguage }) => {
                 disabled={isGenerating}
               />
             </div>
+          </div>
+        </div>
+
+        {/* İmza ve Kaşe Checkbox */}
+        <div className="form-section" style={{ marginTop: '20px' }}>
+          <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <input
+              type="checkbox"
+              id="imza-kase"
+              checked={formData['İmza ve Kaşe']}
+              onChange={(e) => handleInputChange({ target: { name: 'İmza ve Kaşe', value: e.target.checked } })}
+              style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+            />
+            <label htmlFor="imza-kase" style={{ cursor: 'pointer', fontSize: '16px', fontWeight: '500' }}>
+              İmza ve Kaşe
+            </label>
           </div>
         </div>
 

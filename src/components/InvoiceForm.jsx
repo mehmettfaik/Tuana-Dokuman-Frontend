@@ -66,6 +66,9 @@ const InvoiceForm = ({ selectedLanguage }) => {
     'Net Weight': '',
     'Rolls': '',
     
+    // İmza ve Kaşe
+    'İmza ve Kaşe': false,
+    
   });
 
   // Description of Goods - Ürün listesi
@@ -1175,7 +1178,22 @@ IBAN :TR02 0003 2000 0320 0000 9679 79`
                 </div>
               </div>
             </div>
-          ))}
+          ))}        </div>
+
+        {/* İmza ve Kaşe Checkbox */}
+        <div className="form-section" style={{ marginTop: '20px' }}>
+          <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <input
+              type="checkbox"
+              id="imza-kase"
+              checked={formData['İmza ve Kaşe']}
+              onChange={(e) => handleInputChange('İmza ve Kaşe', e.target.checked)}
+              style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+            />
+            <label htmlFor="imza-kase" style={{ cursor: 'pointer', fontSize: '16px', fontWeight: '500' }}>
+              İmza ve Kaşe
+            </label>
+          </div>
         </div>
 
         <div className="form-actions">
