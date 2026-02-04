@@ -23,9 +23,13 @@ const CekiListesiForm = ({ selectedLanguage }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
 
+  // Kg sütunları gösterim kontrolü
+  const [showNetKg, setShowNetKg] = useState(false);
+  const [showBrutKg, setShowBrutKg] = useState(false);
+
   // Excel tarzı basit tablo - sadece Metre ve Lot
   const [rows, setRows] = useState([
-    { id: 1, metre: '', lot: '' }
+    { id: 1, metre: '', lot: '', brutKg: '', netKg: '' }
   ]);
 
   const tableRef = useRef(null);
@@ -83,7 +87,7 @@ const CekiListesiForm = ({ selectedLanguage }) => {
     setFormData(prev => ({ ...prev, musteriAdi: company }));
     setShowDropdown(false);
     setSearchResults([]);
-  };
+  }; 
 
   // Dropdown dışına tıklandığında kapat
   useEffect(() => {
@@ -99,7 +103,7 @@ const CekiListesiForm = ({ selectedLanguage }) => {
   // Satır ekleme
   const addRow = () => {
     const newId = rows.length > 0 ? Math.max(...rows.map(r => r.id)) + 1 : 1;
-    setRows(prev => [...prev, { id: newId, metre: '', lot: '' }]);
+    setRows(prev => [...prev, { id: newId, metre: '', lot: '', brutKg: '', netKg: '' }]);
   };
 
   // Satır silme
@@ -135,19 +139,35 @@ const CekiListesiForm = ({ selectedLanguage }) => {
         const nextInput = document.querySelector(`[data-row="${rowIndex + 1}"][data-field="${field}"]`);
         if (nextInput) nextInput.focus();
       }
-    } else if (e.key === 'Tab' && !e.shiftKey && field === 'lot' && rowIndex === rows.length - 1) {
-      e.preventDefault();
-      addRow();
-      setTimeout(() => {
-        const nextInput = document.querySelector(`[data-row="${rowIndex + 1}"][data-field="metre"]`);
-        if (nextInput) nextInput.focus();
-      }, 50);
+    } else if (e.key === 'Tab' && !e.shiftKey && rowIndex === rows.length - 1) {
+      // Son sütunda Tab basıldığında yeni satır ekle
+      const lastField = showBrutKg || showNetKg ? (showNetKg ? 'netKg' : 'brutKg') : 'lot';
+      if (field === lastField) {
+        e.preventDefault();
+        addRow();
+        setTimeout(() => {
+          const nextInput = document.querySelector(`[data-row="${rowIndex + 1}"][data-field="metre"]`);
+          if (nextInput) nextInput.focus();
+        }, 50);
+      }
     }
   };
 
   // Toplam metre
   const totalMetre = rows.reduce((sum, row) => {
     const val = parseFloat(row.metre);
+    return sum + (isNaN(val) ? 0 : val);
+  }, 0);
+
+  // Toplam brüt kg
+  const totalBrutKg = rows.reduce((sum, row) => {
+    const val = parseFloat(row.brutKg);
+    return sum + (isNaN(val) ? 0 : val);
+  }, 0);
+
+  // Toplam net kg
+  const totalNetKg = rows.reduce((sum, row) => {
+    const val = parseFloat(row.netKg);
     return sum + (isNaN(val) ? 0 : val);
   }, 0);
 
@@ -164,6 +184,8 @@ const CekiListesiForm = ({ selectedLanguage }) => {
       await createFormRecord({
         ...formData,
         rows,
+        showNetKg,
+        showBrutKg,
         language: selectedLanguage,
         userId: user.uid,
         userEmail: user.email
@@ -182,8 +204,37 @@ const CekiListesiForm = ({ selectedLanguage }) => {
     try {
       const record = await getFormRecord(formId);
       if (record) {
-        if (record.formData) setFormData(record.formData);
-        if (record.rows) setRows(record.rows);
+        // formData objesinden veya üst seviyeden veri okuma
+        const savedData = record.formData || record;
+        
+        if (savedData.musteriAdi !== undefined) {
+          setFormData({
+            musteriAdi: savedData.musteriAdi || '',
+            faturaNo: savedData.faturaNo || '',
+            irsaliyeNo: savedData.irsaliyeNo || '',
+            artikelKodu: savedData.artikelKodu || '',
+            karisim: savedData.karisim || '',
+            renkKodu: savedData.renkKodu || '',
+            desenNo: savedData.desenNo || '',
+            not: savedData.not || '',
+          });
+        }
+        
+        const rowsData = savedData.rows || record.rows;
+        if (rowsData) {
+          // Eski kayıtlar için brutKg ve netKg alanlarını ekle
+          const updatedRows = rowsData.map(row => ({
+            ...row,
+            brutKg: row.brutKg || '',
+            netKg: row.netKg || ''
+          }));
+          setRows(updatedRows);
+        }
+        
+        // Checkbox durumlarını yükle (hem record hem de savedData'dan kontrol et)
+        setShowNetKg(savedData.showNetKg || record.showNetKg || false);
+        setShowBrutKg(savedData.showBrutKg || record.showBrutKg || false);
+        
         setSelectedFormId(formId);
         setSuccess('Yüklendi!');
         setTimeout(() => setSuccess(''), 2000);
@@ -219,14 +270,16 @@ const CekiListesiForm = ({ selectedLanguage }) => {
       desenNo: '',
       not: '',
     });
-    setRows([{ id: 1, metre: '', lot: '' }]);
+    setRows([{ id: 1, metre: '', lot: '', brutKg: '', netKg: '' }]);
+    setShowNetKg(false);
+    setShowBrutKg(false);
     setSelectedFormId(null);
   };
 
   // PDF oluştur
   const handleGeneratePDF = async () => {
     try {
-      await generatePDFWithHook({ formType: 'ceki-listesi', formData, rows }, 'ceki-listesi', selectedLanguage);
+      await generatePDFWithHook({ formType: 'ceki-listesi', formData, rows, showNetKg, showBrutKg }, 'ceki-listesi', selectedLanguage);
       setSuccess('PDF oluşturuldu!');
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
@@ -258,6 +311,8 @@ const CekiListesiForm = ({ selectedLanguage }) => {
         body: JSON.stringify({
           ...formData,
           rows,
+          showNetKg,
+          showBrutKg,
           language: selectedLanguage
         })
       });
@@ -383,6 +438,26 @@ const CekiListesiForm = ({ selectedLanguage }) => {
         />
       </div>
 
+      {/* Kg Sütunları Kontrol */}
+      <div className="kg-controls">
+        <label className="checkbox-label">
+          <input 
+            type="checkbox" 
+            checked={showBrutKg} 
+            onChange={(e) => setShowBrutKg(e.target.checked)}
+          />
+          <span>Brüt Kg Ekle</span>
+        </label>
+        <label className="checkbox-label">
+          <input 
+            type="checkbox" 
+            checked={showNetKg} 
+            onChange={(e) => setShowNetKg(e.target.checked)}
+          />
+          <span>Net Kg Ekle</span>
+        </label>
+      </div>
+
       {/* Excel Tablo */}
       <div className="excel-section">
         <table className="excel" ref={tableRef}>
@@ -391,6 +466,8 @@ const CekiListesiForm = ({ selectedLanguage }) => {
               <th className="col-no">#</th>
               <th className="col-metre">Metre</th>
               <th className="col-lot">Lot</th>
+              {showBrutKg && <th className="col-kg">Brüt Kg</th>}
+              {showNetKg && <th className="col-kg">Net Kg</th>}
               <th className="col-del"></th>
             </tr>
           </thead>
@@ -421,6 +498,34 @@ const CekiListesiForm = ({ selectedLanguage }) => {
                     placeholder="Lot no"
                   />
                 </td>
+                {showBrutKg && (
+                  <td className="cell">
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={row.brutKg}
+                      onChange={(e) => handleCellChange(row.id, 'brutKg', e.target.value)}
+                      onKeyDown={(e) => handleKeyDown(e, idx, 'brutKg')}
+                      data-row={idx}
+                      data-field="brutKg"
+                      placeholder="0.00"
+                    />
+                  </td>
+                )}
+                {showNetKg && (
+                  <td className="cell">
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={row.netKg}
+                      onChange={(e) => handleCellChange(row.id, 'netKg', e.target.value)}
+                      onKeyDown={(e) => handleKeyDown(e, idx, 'netKg')}
+                      data-row={idx}
+                      data-field="netKg"
+                      placeholder="0.00"
+                    />
+                  </td>
+                )}
                 <td className="cell-del">
                   <button onClick={() => removeRow(row.id)} title="Sil">×</button>
                 </td>
@@ -432,6 +537,8 @@ const CekiListesiForm = ({ selectedLanguage }) => {
               <td className="foot-label">Toplam:</td>
               <td className="foot-total">{totalMetre.toFixed(2)} m</td>
               <td></td>
+              {showBrutKg && <td className="foot-total">{totalBrutKg.toFixed(2)} kg</td>}
+              {showNetKg && <td className="foot-total">{totalNetKg.toFixed(2)} kg</td>}
               <td></td>
             </tr>
           </tfoot>

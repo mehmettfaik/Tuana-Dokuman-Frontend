@@ -323,6 +323,55 @@
   box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
 }
 
+/* Kg Sütunları Kontrol */
+.kg-controls {
+  display: flex;
+  gap: 20px;
+  padding: 15px 20px;
+  background: #fafafa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+  padding: 8px 15px;
+  border-radius: 6px;
+  background: #a9a9a9;
+  border: 2px solid transparent;
+}
+
+.checkbox-label:hover {
+  background: #cbcbcb;
+  border-color: #dee2e6;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: #333;
+  margin: 0;
+}
+
+.checkbox-label span {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+.checkbox-label input[type="checkbox"]:checked + span {
+  color: #000;
+  font-weight: 600;
+}
+
 /* Excel Tablo Section */
 .excel-section {
   margin-bottom: 20px;
@@ -349,8 +398,9 @@
 }
 
 .col-no { width: 50px; }
-.col-metre { width: 45%; }
-.col-lot { width: 45%; }
+.col-metre { width: 30%; }
+.col-lot { width: 30%; }
+.col-kg { width: 20%; min-width: 120px; }
 .col-del { width: 40px; }
 
 .excel tbody tr:nth-child(even) {
