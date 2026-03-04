@@ -760,9 +760,9 @@ const OrderConfirmationForm = ({ selectedLanguage }) => {
                         onChange={(e) => handleGoodsChange(item.id, 'CURRENCY', e.target.value)}
                         style={{ width: '80px', flex: '0 0 80px' }}
                       >
-                        <option value="EUR">EUR</option>
-                        <option value="USD">USD</option>
-                        <option value="TRY">TRY</option>
+                        <option value="€ EUR">EUR</option>
+                        <option value="$ USD">USD</option>
+                        <option value="₺ TRY">TRY</option>
                       </select>
                     </div>
                   </div>
