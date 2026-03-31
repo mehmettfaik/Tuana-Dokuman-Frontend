@@ -1021,7 +1021,7 @@ IBAN :TR02 0003 2000 0320 0000 9679 79`
     <option value="150 DAYS">150 DAYS</option>
     <option value="180 DAYS">180 DAYS</option>
     <option value="IMMEDIATELY">IMMEDIATELY</option>
-    <option value="CASH IN ADVANCE">CASH IN ADVANCE</option>
+    <option value="ADVANCED PAYMENT">ADVANCED PAYMENT</option>
   </select>
 
   {/* Seçilen değer düzenlenebilir input */}
