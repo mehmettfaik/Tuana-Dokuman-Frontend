@@ -107,6 +107,7 @@ const PackingListForm = ({ selectedLanguage }) => {
   const [loadingForms, setLoadingForms] = useState(false);
   const [selectedFormId, setSelectedFormId] = useState(null);
   const [formsError, setFormsError] = useState('');
+  const [initialDataStr, setInitialDataStr] = useState(null);
 
   // Sayfa yüklendiğinde geçmiş belgeleri yükle
   useEffect(() => {
@@ -202,8 +203,10 @@ const PackingListForm = ({ selectedLanguage }) => {
         
        
         setPackingItems(mappedItems);
+        setInitialDataStr(JSON.stringify({ ...formRecord.formData, packingItems: mappedItems }));
       } else {
         console.warn('⚠️ Packing Items verisi bulunamadı');
+        setInitialDataStr(JSON.stringify({ ...formRecord.formData, packingItems }));
       }
       
       setSuccess('Form verileri başarıyla yüklendi');
@@ -232,7 +235,7 @@ const PackingListForm = ({ selectedLanguage }) => {
         setSelectedFormId(null);
       }
       
-      await loadSavedForms();
+      setSavedForms(prev => prev.filter(f => f.id !== formId));
     } catch (error) {
       console.error('Belge silinirken hata:', error);
       setFormsError('Belge silinemedi');
@@ -717,15 +720,18 @@ const PackingListForm = ({ selectedLanguage }) => {
         formType: 'packing-list'
       };
       
+      const currentDataStr = JSON.stringify(combinedData);
      
       // 1. Önce veriyi Firestore'a kaydet (Backend hazırsa)
-      try {
-        await createFormRecord(combinedData, 'packing-list');
-        
-        // Listeyi yenile
-        await loadSavedForms();
-      } catch (saveError) {
-        // Backend hazır olmadığında sessizce devam et
+      if (currentDataStr !== initialDataStr) {
+        try {
+          await createFormRecord(combinedData, 'packing-list');
+          setInitialDataStr(currentDataStr);
+          // Listeyi yenile
+          await loadSavedForms();
+        } catch (saveError) {
+          // Backend hazır olmadığında sessizce devam et
+        }
       }
       
       // 2. PDF oluştur ve indir

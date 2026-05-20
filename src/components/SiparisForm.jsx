@@ -86,6 +86,7 @@ const SiparisForm = ({ selectedLanguage }) => {
   const [loadingForms, setLoadingForms] = useState(false);
   const [selectedFormId, setSelectedFormId] = useState(null);
   const [formsError, setFormsError] = useState('');
+  const [initialDataStr, setInitialDataStr] = useState(null);
 
   // Sayfa yüklendiğinde geçmiş belgeleri yükle
   useEffect(() => {
@@ -135,8 +136,10 @@ const SiparisForm = ({ selectedLanguage }) => {
       
       if (goodsData) {
         setGoods(goodsData);
+        setInitialDataStr(JSON.stringify({ ...formRecord.formData, goods: goodsData }));
       } else {
         console.warn(' Goods verisi bulunamadı');
+        setInitialDataStr(JSON.stringify({ ...formRecord.formData, goods: goods }));
       }
       
       setSuccess('Form verileri başarıyla yüklendi');
@@ -167,7 +170,7 @@ const SiparisForm = ({ selectedLanguage }) => {
       }
       
       // Listeyi yenile
-      await loadSavedForms();
+      setSavedForms(prev => prev.filter(f => f.id !== formId));
     } catch (error) {
       console.error('Belge silinirken hata:', error);
       setFormsError('Belge silinemedi');
@@ -313,15 +316,19 @@ const SiparisForm = ({ selectedLanguage }) => {
         }
       };
 
+      const currentDataStr = JSON.stringify(requestData);
       
       // 1. Önce veriyi Firestore'a kaydet (Backend hazırsa)
-      try {
-    await createFormRecord(requestData, 'siparis');        
-        // Listeyi yenile
-        await loadSavedForms();
-      } catch (saveError) {
-        console.warn('Form kaydedilemedi (Backend henüz hazır değil):', saveError.message);
-        // Backend hazır olmadığında sessizce devam et - PDF oluşturmaya devam
+      if (currentDataStr !== initialDataStr) {
+        try {
+          await createFormRecord(requestData, 'siparis');        
+          setInitialDataStr(currentDataStr);
+          // Listeyi yenile
+          await loadSavedForms();
+        } catch (saveError) {
+          console.warn('Form kaydedilemedi (Backend henüz hazır değil):', saveError.message);
+          // Backend hazır olmadığında sessizce devam et - PDF oluşturmaya devam
+        }
       }
       
       // 2. PDF oluştur ve indir

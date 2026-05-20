@@ -45,6 +45,7 @@ const QualityControlForm = ({ selectedLanguage }) => {
   const [loadingForms, setLoadingForms] = useState(false);
   const [selectedFormId, setSelectedFormId] = useState(null);
   const [formsError, setFormsError] = useState('');
+  const [initialDataStr, setInitialDataStr] = useState(null);
 
   // Sayfa yüklendiğinde geçmiş belgeleri yükle
   useEffect(() => {
@@ -93,8 +94,10 @@ const QualityControlForm = ({ selectedLanguage }) => {
       
       if (rollsData) {
         setRolls(rollsData);
+        setInitialDataStr(JSON.stringify({ ...formRecord.formData, rolls: rollsData }));
       } else {
         console.warn('⚠️ Rolls verisi bulunamadı');
+        setInitialDataStr(JSON.stringify({ ...formRecord.formData, rolls: rolls }));
       }
       
       setSuccess('Form verileri başarıyla yüklendi');
@@ -123,7 +126,7 @@ const QualityControlForm = ({ selectedLanguage }) => {
         setSelectedFormId(null);
       }
       
-      await loadSavedForms();
+      setSavedForms(prev => prev.filter(f => f.id !== formId));
     } catch (error) {
       console.error('Belge silinirken hata:', error);
       setFormsError('Belge silinemedi');
@@ -237,14 +240,19 @@ const QualityControlForm = ({ selectedLanguage }) => {
         formType: 'quality-control'
       };
       
+      const currentDataStr = JSON.stringify(combinedData);
+      
       // 1. Önce veriyi Firestore'a kaydet (Backend hazırsa)
-      try {
-        await createFormRecord(combinedData, 'quality-control');
-        
-        // Listeyi yenile
-        await loadSavedForms();
-      } catch (saveError) {
-        // Backend hazır olmadığında sessizce devam et
+      if (currentDataStr !== initialDataStr) {
+        try {
+          await createFormRecord(combinedData, 'quality-control');
+          setInitialDataStr(currentDataStr);
+          
+          // Listeyi yenile
+          await loadSavedForms();
+        } catch (saveError) {
+          // Backend hazır olmadığında sessizce devam et
+        }
       }
       
       // 2. PDF oluştur ve indir

@@ -96,6 +96,7 @@ const ProformaInvoiceForm = ({ selectedLanguage }) => {
   const [loadingForms, setLoadingForms] = useState(false);
   const [selectedFormId, setSelectedFormId] = useState(null);
   const [formsError, setFormsError] = useState('');
+  const [initialDataStr, setInitialDataStr] = useState(null);
 
   // Sayfa yüklendiğinde geçmiş belgeleri yükle
   useEffect(() => {
@@ -144,8 +145,10 @@ const ProformaInvoiceForm = ({ selectedLanguage }) => {
       if (goodsData) {
         console.log('Goods bulundu, yükleniyor:', goodsData);
         setGoods(goodsData);
+        setInitialDataStr(JSON.stringify({ ...formRecord.formData, goods: goodsData }));
       } else {
         console.warn(' Goods verisi bulunamadı');
+        setInitialDataStr(JSON.stringify({ ...formRecord.formData, goods: goods }));
       }
       
       setSuccess('Form verileri başarıyla yüklendi');
@@ -174,7 +177,7 @@ const ProformaInvoiceForm = ({ selectedLanguage }) => {
         setSelectedFormId(null);
       }
       
-      await loadSavedForms();
+      setSavedForms(prev => prev.filter(f => f.id !== formId));
     } catch (error) {
       console.error('Belge silinirken hata:', error);
       setFormsError('Belge silinemedi');
@@ -366,15 +369,19 @@ IBAN :TR02 0003 2000 0320 0000 9679 79`
         goods: goods
       };
       
+      const currentDataStr = JSON.stringify(combinedData);
       
       // 1. Önce veriyi Firestore'a kaydet (Backend hazırsa)
-      try {
-        await createFormRecord(combinedData, 'proforma-invoice');        
-        // Listeyi yenile
-        await loadSavedForms();
-      } catch (saveError) {
-        console.warn('Form kaydedilemedi (Backend henüz hazır değil):', saveError.message);
-        // Backend hazır olmadığında sessizce devam et
+      if (currentDataStr !== initialDataStr) {
+        try {
+          await createFormRecord(combinedData, 'proforma-invoice');        
+          setInitialDataStr(currentDataStr);
+          // Listeyi yenile
+          await loadSavedForms();
+        } catch (saveError) {
+          console.warn('Form kaydedilemedi (Backend henüz hazır değil):', saveError.message);
+          // Backend hazır olmadığında sessizce devam et
+        }
       }
       
       // 2. PDF oluştur ve indir

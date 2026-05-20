@@ -46,6 +46,7 @@ const CekiListesiForm = ({ selectedLanguage }) => {
   const [savedForms, setSavedForms] = useState([]);
   const [loadingForms, setLoadingForms] = useState(false);
   const [selectedFormId, setSelectedFormId] = useState(null);
+  const [initialDataStr, setInitialDataStr] = useState(null);
 
   useEffect(() => {
     loadSavedForms();
@@ -172,7 +173,7 @@ const CekiListesiForm = ({ selectedLanguage }) => {
   }, 0);
 
   // Kaydet
-  const handleSave = async () => {
+  const handleSave = async (isDownloading = false) => {
     try {
       const user = auth.currentUser;
       if (!user) {
@@ -180,8 +181,7 @@ const CekiListesiForm = ({ selectedLanguage }) => {
         return;
       }
 
-      // API iki parametre bekliyor: (formData, formType)
-      await createFormRecord({
+      const formPayload = {
         ...formData,
         rows,
         showNetKg,
@@ -189,11 +189,16 @@ const CekiListesiForm = ({ selectedLanguage }) => {
         language: selectedLanguage,
         userId: user.uid,
         userEmail: user.email
-      }, 'ceki-listesi');
+      };
 
-      setSuccess('Kaydedildi!');
-      loadSavedForms();
-      setTimeout(() => setSuccess(''), 2000);
+      const currentContentStr = JSON.stringify(formPayload);
+      if (!isDownloading || currentContentStr !== initialDataStr) {
+        await createFormRecord(formPayload, 'ceki-listesi');
+        setInitialDataStr(currentContentStr);
+        setSuccess('Kaydedildi!');
+        loadSavedForms();
+        setTimeout(() => setSuccess(''), 2000);
+      }
     } catch (err) {
       setError('Kaydetme hatası: ' + err.message);
     }
@@ -235,6 +240,14 @@ const CekiListesiForm = ({ selectedLanguage }) => {
         setShowNetKg(savedData.showNetKg || record.showNetKg || false);
         setShowBrutKg(savedData.showBrutKg || record.showBrutKg || false);
         
+        // set initial state for modifications check
+        setInitialDataStr(JSON.stringify({ 
+           ...savedData,
+           rows: rowsData,
+           showNetKg: savedData.showNetKg || record.showNetKg || false,
+           showBrutKg: savedData.showBrutKg || record.showBrutKg || false
+        }));
+
         setSelectedFormId(formId);
         setSuccess('Yüklendi!');
         setTimeout(() => setSuccess(''), 2000);
@@ -249,7 +262,7 @@ const CekiListesiForm = ({ selectedLanguage }) => {
     if (!window.confirm('Silmek istediğinize emin misiniz?')) return;
     try {
       await deleteFormRecord(formId);
-      loadSavedForms();
+      setSavedForms(prev => prev.filter(f => f.id !== formId));
       if (selectedFormId === formId) setSelectedFormId(null);
       setSuccess('Silindi!');
       setTimeout(() => setSuccess(''), 2000);
