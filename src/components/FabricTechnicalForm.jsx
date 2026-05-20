@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import usePDFGeneration from '../hooks/usePDFGeneration';
+import { createFormRecord, getFormRecords, getFormRecord, deleteFormRecord } from '../api';
 import '../css/FabricTechnicalForm.css';
 
 const FabricTechnicalForm = ({ selectedLanguage }) => {
@@ -29,6 +30,74 @@ const FabricTechnicalForm = ({ selectedLanguage }) => {
 
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  // Geçmiş belgeler için state'ler
+  const [savedForms, setSavedForms] = useState([]);
+  const [loadingForms, setLoadingForms] = useState(false);
+  const [selectedFormId, setSelectedFormId] = useState(null);
+  const [formsError, setFormsError] = useState('');
+  const [initialDataStr, setInitialDataStr] = useState(null);
+
+  // Sayfa yüklendiğinde geçmiş belgeleri yükle
+  useEffect(() => {
+    loadSavedForms();
+  }, []);
+
+  const loadSavedForms = async () => {
+    setLoadingForms(true);
+    setFormsError('');
+    try {
+      const forms = await getFormRecords('fabric-technical');
+      setSavedForms(forms || []);
+    } catch (error) {
+      setSavedForms([]);
+    } finally {
+      setLoadingForms(false);
+    }
+  };
+
+  const handleSelectForm = async (formId) => {
+    setSelectedFormId(formId);
+    setFormsError('');
+    try {
+      const formRecord = await getFormRecord(formId);
+      
+      if (formRecord.formData) {
+        setFormData(formRecord.formData);
+        setInitialDataStr(JSON.stringify(formRecord.formData));
+      }
+      
+      setSuccess('Form verileri başarıyla yüklendi');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (error) {
+      console.error('Form verisi yüklenirken hata:', error);
+      setFormsError('Form verisi yüklenemedi');
+    }
+  };
+
+  const handleDeleteForm = async (formId, e) => {
+    e.stopPropagation();
+    
+    if (!window.confirm('Bu belgeyi silmek istediğinizden emin misiniz?')) {
+      return;
+    }
+    
+    setFormsError('');
+    try {
+      await deleteFormRecord(formId);
+      setSuccess('Belge başarıyla silindi');
+      setTimeout(() => setSuccess(''), 3000);
+      
+      if (selectedFormId === formId) {
+        setSelectedFormId(null);
+      }
+      
+      setSavedForms(prev => prev.filter(f => f.id !== formId));
+    } catch (error) {
+      console.error('Belge silinirken hata:', error);
+      setFormsError('Belge silinemedi');
+    }
+  };
 
   // Yeni PDF generation hook'u
   const { isGenerating, progress, error: pdfError, generatePDF: generatePDFWithHook } = usePDFGeneration();
@@ -114,6 +183,24 @@ const FabricTechnicalForm = ({ selectedLanguage }) => {
     setSuccess('');
 
     try {
+      const currentDataStr = JSON.stringify(formData);
+
+      // 1. Önce veriyi Firestore'a kaydet (Backend hazırsa)
+      if (currentDataStr !== initialDataStr) {
+        try {
+          // Wrap with additional info like other forms if needed, but here formData is enough
+          const payload = {
+             ...formData,
+             docType: 'fabric-technical',
+             formType: 'fabric-technical'
+          };
+          await createFormRecord(payload, 'fabric-technical');
+          setInitialDataStr(currentDataStr);
+          await loadSavedForms();
+        } catch (saveError) {
+          console.warn('Form kaydedilemedi:', saveError.message);
+        }
+      }
 
       // Yeni 3-aşamalı PDF generation kullan
       const success = await generatePDFWithHook(formData, 'fabric-technical', selectedLanguage);
@@ -148,10 +235,12 @@ const FabricTechnicalForm = ({ selectedLanguage }) => {
       'NOTE_3': '',
       'ISSUED BY': '',
       'RESPONSIBLE TECHNICIAN': '',
-      'CARE_INSTRUCTIONS': []
+      'CARE_INSTRUCTIONS': [],
+      'İmza ve Kaşe': false
     });
     setError('');
     setSuccess('');
+    setSelectedFormId(null);
   };
 
   return (
@@ -180,6 +269,64 @@ const FabricTechnicalForm = ({ selectedLanguage }) => {
           {progress}
         </div>
       )}
+
+      {/* GEÇMİŞ BELGELER LİSTESİ */}
+      <div className="saved-forms-section">
+        <h3>Geçmiş Belgeler</h3>
+        
+        {loadingForms && (
+          <div className="loading-indicator">
+            <span className="spinner"></span> Belgeler yükleniyor...
+          </div>
+        )}
+        
+        {formsError && (
+          <div className="alert alert-error">
+            {formsError}
+          </div>
+        )}
+        
+        {!loadingForms && savedForms.length === 0 && (
+          <p className="no-forms-message">Henüz kaydedilmiş belge bulunmuyor.</p>
+        )}
+        
+        {!loadingForms && savedForms.length > 0 && (
+          <div className="saved-forms-list">
+            {savedForms.map((form) => (
+              <div 
+                key={form.id} 
+                className={`saved-form-item ${selectedFormId === form.id ? 'selected' : ''}`}
+                onClick={() => handleSelectForm(form.id)}
+              >
+                <div className="form-item-header">
+                  <div className="form-item-info">
+                    <strong>
+                      {form.formData?.['ARTICLE CODE'] || 'N/A'}
+                    </strong>
+                    <span className="form-item-date">
+                      {new Date(form.createdAt).toLocaleDateString('tr-TR', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </span>
+                  </div>
+                  <button 
+                    type="button" 
+                    className="btn-delete-form"
+                    onClick={(e) => handleDeleteForm(form.id, e)}
+                    title="Sil"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       <form onSubmit={handleSubmit} className="fabric-form">
         <div className="form-section">
