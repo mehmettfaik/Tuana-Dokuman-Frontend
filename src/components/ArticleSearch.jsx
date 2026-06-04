@@ -99,7 +99,7 @@ const ArticleSearch = ({ value, onSelect, onChange, placeholder, inputType = 'in
     <div className="article-search-wrapper" ref={wrapperRef}>
       <InputComponent
         type={inputType === 'input' ? 'text' : undefined}
-        className={inputType === 'textarea' ? undefined : 'form-input'}
+        className={inputType === 'textarea' ? 'form-textarea' : 'form-input'}
         value={value || ''}
         onChange={handleInputChange}
         onFocus={() => { if (searchResults.length > 0) setShowDropdown(true); }}
