@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import usePDFGeneration from '../hooks/usePDFGeneration';
 import SystemStatus from './SystemStatus';
 import RecipientManager from './RecipientManager';
+import ArticleSearch from './ArticleSearch';
 import { createFormRecord, getFormRecords, getFormRecord, deleteFormRecord } from '../api';
 import { auth } from '../firebase/config';
 import '../css/ProformaInvoiceForm.css';
@@ -1138,11 +1139,15 @@ IBAN :TR02 0003 2000 0320 0000 9679 79`
                 <div className="goods-grid-row">
                   <div className="form-group">
                     <label className="form-label">ARTICLE NUMBER</label>
-                    <input
-                      type="text"
-                      className="form-input"
+                    <ArticleSearch
                       value={item['ARTICLE NUMBER']}
-                      onChange={(e) => handleGoodsChange(item.id, 'ARTICLE NUMBER', e.target.value)}
+                      onChange={(val) => handleGoodsChange(item.id, 'ARTICLE NUMBER', val)}
+                      onSelect={(article) => {
+                        handleGoodsChange(item.id, 'ARTICLE NUMBER', article.articleNumber);
+                        if (article.fabricWeightWidth) {
+                          handleGoodsChange(item.id, 'WEIGHT / WIDHT', article.fabricWeightWidth);
+                        }
+                      }}
                       placeholder="Ürün numarası"
                     />
                   </div>

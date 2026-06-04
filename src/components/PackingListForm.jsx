@@ -3,6 +3,7 @@ import usePDFGeneration from '../hooks/usePDFGeneration';
 import RecipientManager from './RecipientManager';
 import { createFormRecord, getFormRecords, getFormRecord, deleteFormRecord } from '../api';
 import { auth } from '../firebase/config';
+import ArticleSearch from './ArticleSearch';
 import '../css/PackingListForm.css';
 
 const PackingListForm = ({ selectedLanguage }) => {
@@ -1659,18 +1660,17 @@ const PackingListForm = ({ selectedLanguage }) => {
                   <tr key={item.id}>
                     <td className="cell-no">{idx + 1}</td>
                     <td className="cell-article">
-                      <textarea
+                      <ArticleSearch
                         value={item['ARTICLE NUMBER / COMPOSITION / CUSTOMS CODE']}
-                        onChange={(e) => handlePackingItemChange(item.id, 'ARTICLE NUMBER / COMPOSITION / CUSTOMS CODE', e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && !e.shiftKey) {
-                            handleKeyDown(e, idx, 'article');
+                        onChange={(val) => handlePackingItemChange(item.id, 'ARTICLE NUMBER / COMPOSITION / CUSTOMS CODE', val)}
+                        onSelect={(article) => {
+                          handlePackingItemChange(item.id, 'ARTICLE NUMBER / COMPOSITION / CUSTOMS CODE', article.articleNumber);
+                          if (article.fabricWeightWidth) {
+                            handlePackingItemChange(item.id, 'FABRIC WEIGHT / WIDHT', article.fabricWeightWidth);
                           }
                         }}
-                        data-row={idx}
-                        data-field="article"
                         placeholder="Article / Comp / Code"
-                        rows="1"
+                        inputType="textarea"
                       />
                     </td>
                     <td className="cell">
