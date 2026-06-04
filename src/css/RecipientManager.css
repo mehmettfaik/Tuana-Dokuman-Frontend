@@ -165,6 +165,26 @@
   color: #333;
 }
 
+.recipient-list-search {
+  margin-bottom: 12px;
+}
+
+.recipient-list-search .form-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background-color: #fafafa;
+}
+
+.recipient-list-search .form-input:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
+  background-color: #fff;
+}
+
 .recipients-list {
   max-height: 300px;
   overflow-y: auto;

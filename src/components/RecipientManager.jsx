@@ -6,6 +6,7 @@ import '../css/RecipientManager.css';
 
 const RecipientManager = ({ onRecipientSelect, selectedRecipient }) => {
   const [recipients, setRecipients] = useState([]);
+  const [recipientListFilter, setRecipientListFilter] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -446,8 +447,28 @@ const RecipientManager = ({ onRecipientSelect, selectedRecipient }) => {
               {!editingRecipient && recipients.length > 0 && (
                 <div className="existing-recipients">
                   <h4>Mevcut Recipients</h4>
+                  <div className="recipient-list-search">
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={recipientListFilter}
+                      onChange={(e) => setRecipientListFilter(e.target.value)}
+                      placeholder="🔍 Recipient ara (şirket adı, şehir...)"
+                    />
+                  </div>
                   <div className="recipients-list">
-                    {recipients.map((recipient) => (
+                    {recipients
+                      .filter((recipient) => {
+                        if (!recipientListFilter.trim()) return true;
+                        const q = recipientListFilter.toLowerCase();
+                        return (
+                          (recipient.companyName || '').toLowerCase().includes(q) ||
+                          (recipient.cityStateCountry || '').toLowerCase().includes(q) ||
+                          (recipient.vat || '').toLowerCase().includes(q) ||
+                          (recipient.contactPerson || '').toLowerCase().includes(q)
+                        );
+                      })
+                      .map((recipient) => (
                       <div key={recipient.id} className="recipient-item">
                         <div className="recipient-info">
                           <strong>{recipient.companyName}</strong>

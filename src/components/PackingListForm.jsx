@@ -99,6 +99,9 @@ const PackingListForm = ({ selectedLanguage }) => {
   // RECIPIENT bilgilerini DELIVERY ADDRESS'e kopyalama için state
   const [copyRecipientToDelivery, setCopyRecipientToDelivery] = useState(false);
 
+  // Otomatik Net/Brüt hesaplama için state
+  const [autoCalcEnabled, setAutoCalcEnabled] = useState(false);
+
   // Yeni PDF generation hook'u
   const { isGenerating, progress, error: pdfError, generatePDF: generatePDFWithHook } = usePDFGeneration();
 
@@ -326,6 +329,39 @@ const PackingListForm = ({ selectedLanguage }) => {
   };
 
 
+  // Fabric Weight/Width alanından gramaj ve en değerlerini parse eden yardımcı fonksiyon
+  // Örnek: "200 GR / 150 CM" -> { gramaj: 200, en: 150 }
+  const parseFabricWeightWidth = (fabricStr) => {
+    if (!fabricStr) return null;
+    const cleanStr = fabricStr.toUpperCase().trim();
+    // "200 GR / 150 CM" veya "200GR/150CM" veya "200 / 150" formatlarını yakala
+    const match = cleanStr.match(/(\d+(?:[.,]\d+)?)\s*(?:GR)?\s*\/\s*(\d+(?:[.,]\d+)?)\s*(?:CM)?/);
+    if (match) {
+      const gramaj = parseFloat(match[1].replace(',', '.'));
+      const en = parseFloat(match[2].replace(',', '.'));
+      if (!isNaN(gramaj) && !isNaN(en) && gramaj > 0 && en > 0) {
+        return { gramaj, en };
+      }
+    }
+    return null;
+  };
+
+  // Otomatik Net/Brüt hesaplama fonksiyonu
+  const calculateWeights = (item) => {
+    const parsed = parseFabricWeightWidth(item['FABRIC WEIGHT / WIDHT']);
+    const quantity = parseFloat(item['QUANTITY (METERS)']);
+    
+    if (parsed && !isNaN(quantity) && quantity > 0) {
+      const netKg = (parsed.gramaj * parsed.en * quantity) / 100000;
+      const grossKg = netKg + 0.70;
+      return {
+        net: netKg.toFixed(2),
+        gross: grossKg.toFixed(2)
+      };
+    }
+    return null;
+  };
+
   // Packing items verilerini güncelleme
   const handlePackingItemChange = (id, field, value) => {
     // Input field değişikliklerini logla
@@ -334,7 +370,18 @@ const PackingListForm = ({ selectedLanguage }) => {
     
     setPackingItems(prev => prev.map(item => {
       if (item.id === id) {
-        return { ...item, [field]: value };
+        const updatedItem = { ...item, [field]: value };
+        
+        // Otomatik hesaplama aktifse ve ilgili alanlar değiştiyse
+        if (autoCalcEnabled && (field === 'FABRIC WEIGHT / WIDHT' || field === 'QUANTITY (METERS)')) {
+          const weights = calculateWeights(updatedItem);
+          if (weights) {
+            updatedItem['NET WEIGHT (KG)'] = weights.net;
+            updatedItem['GROSS WEIGHT(KG)'] = weights.gross;
+          }
+        }
+        
+        return updatedItem;
       }
       return item;
     }));
@@ -874,6 +921,9 @@ const PackingListForm = ({ selectedLanguage }) => {
     // OCR flag'ini de sıfırla
     setIsOCRData(false);
     
+    // Otomatik hesaplama flag'ini de sıfırla
+    setAutoCalcEnabled(false);
+    
     setError('');
     setSuccess('');
   };
@@ -1351,6 +1401,79 @@ const PackingListForm = ({ selectedLanguage }) => {
         <div className="form-section">
           <div className="goods-header">
             <h3 className="section-title">PACKING DETAILS</h3>
+          </div>
+
+          {/* Otomatik Hesaplama Checkbox */}
+          <div className="auto-calc-section" style={{
+            background: autoCalcEnabled 
+              ? 'linear-gradient(135deg, #e3f2fd, #e8f5e9)' 
+              : 'linear-gradient(135deg, #f8f9fa, #f1f3f5)',
+            border: autoCalcEnabled ? '2px solid #42a5f5' : '2px solid #dee2e6',
+            borderRadius: '10px',
+            padding: '16px 20px',
+            margin: '15px 0',
+            transition: 'all 0.3s ease'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <input
+                type="checkbox"
+                id="auto-calc-checkbox"
+                checked={autoCalcEnabled}
+                onChange={(e) => {
+                  const enabled = e.target.checked;
+                  setAutoCalcEnabled(enabled);
+                  
+                  // Checkbox aktif edildiğinde mevcut tüm satırları yeniden hesapla
+                  if (enabled) {
+                    setPackingItems(prev => prev.map(item => {
+                      const weights = calculateWeights(item);
+                      if (weights) {
+                        return {
+                          ...item,
+                          'NET WEIGHT (KG)': weights.net,
+                          'GROSS WEIGHT(KG)': weights.gross
+                        };
+                      }
+                      return item;
+                    }));
+                  }
+                }}
+                style={{ 
+                  width: '22px', 
+                  height: '22px', 
+                  cursor: 'pointer',
+                  accentColor: '#42a5f5'
+                }}
+              />
+              <label htmlFor="auto-calc-checkbox" style={{ 
+                cursor: 'pointer', 
+                fontSize: '15px', 
+                fontWeight: '600',
+                color: autoCalcEnabled ? '#1565c0' : '#495057',
+                transition: 'color 0.3s ease',
+                userSelect: 'none'
+              }}>
+                Otomatik Net/Brüt Hesaplama
+              </label>
+            </div>
+            {autoCalcEnabled && (
+              <div style={{ 
+                marginTop: '10px', 
+                paddingTop: '10px',
+                borderTop: '1px solid rgba(66, 165, 245, 0.3)',
+                fontSize: '13px', 
+                color: '#546e7a',
+                lineHeight: '1.6'
+              }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <span>📐 <strong>Net (kg)</strong> = (Gramaj × En × Quantity) / 100.000</span>
+                  <span>📦 <strong>Brüt (kg)</strong> = Net (kg) + 0,70 kg</span>
+                  <span style={{ fontSize: '12px', color: '#78909c', marginTop: '4px' }}>
+                    💡 Fabric Weight/Width alanını "200 GR / 150 CM" formatında girin
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Firma Seçimi ve PDF Yükleme Bölümü */}
