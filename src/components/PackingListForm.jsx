@@ -1404,17 +1404,8 @@ const PackingListForm = ({ selectedLanguage }) => {
           </div>
 
           {/* Otomatik Hesaplama Checkbox */}
-          <div className="auto-calc-section" style={{
-            background: autoCalcEnabled 
-              ? 'linear-gradient(135deg, #e3f2fd, #e8f5e9)' 
-              : 'linear-gradient(135deg, #f8f9fa, #f1f3f5)',
-            border: autoCalcEnabled ? '2px solid #42a5f5' : '2px solid #dee2e6',
-            borderRadius: '10px',
-            padding: '16px 20px',
-            margin: '15px 0',
-            transition: 'all 0.3s ease'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ margin: '15px 0' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <input
                 type="checkbox"
                 id="auto-calc-checkbox"
@@ -1438,42 +1429,15 @@ const PackingListForm = ({ selectedLanguage }) => {
                     }));
                   }
                 }}
-                style={{ 
-                  width: '22px', 
-                  height: '22px', 
-                  cursor: 'pointer',
-                  accentColor: '#42a5f5'
-                }}
+                style={{ width: '18px', height: '18px', cursor: 'pointer' }}
               />
-              <label htmlFor="auto-calc-checkbox" style={{ 
-                cursor: 'pointer', 
-                fontSize: '15px', 
-                fontWeight: '600',
-                color: autoCalcEnabled ? '#1565c0' : '#495057',
-                transition: 'color 0.3s ease',
-                userSelect: 'none'
-              }}>
+              <label htmlFor="auto-calc-checkbox" style={{ cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>
                 Otomatik Net/Brüt Hesaplama
               </label>
             </div>
-            {autoCalcEnabled && (
-              <div style={{ 
-                marginTop: '10px', 
-                paddingTop: '10px',
-                borderTop: '1px solid rgba(66, 165, 245, 0.3)',
-                fontSize: '13px', 
-                color: '#546e7a',
-                lineHeight: '1.6'
-              }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <span>📐 <strong>Net (kg)</strong> = (Gramaj × En × Quantity) / 100.000</span>
-                  <span>📦 <strong>Brüt (kg)</strong> = Net (kg) + 0,70 kg</span>
-                  <span style={{ fontSize: '12px', color: '#78909c', marginTop: '4px' }}>
-                    💡 Fabric Weight/Width alanını "200 GR / 150 CM" formatında girin
-                  </span>
-                </div>
-              </div>
-            )}
+            <p style={{ margin: '6px 0 0 28px', fontSize: '12px', color: '#888' }}>
+              Net (kg) = (Gramaj × En × Quantity) / 100.000 &nbsp;|&nbsp; Brüt (kg) = Net + 0,70 &nbsp;|&nbsp; Format: "200 GR / 150 CM"
+            </p>
           </div>
 
           {/* Firma Seçimi ve PDF Yükleme Bölümü */}
