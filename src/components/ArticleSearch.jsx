@@ -96,7 +96,11 @@ const ArticleSearch = ({ value, onSelect, onChange, placeholder, inputType = 'in
   const InputComponent = inputType === 'textarea' ? 'textarea' : 'input';
 
   return (
-    <div className="article-search-wrapper" ref={wrapperRef}>
+    <div 
+      className="article-search-wrapper" 
+      ref={wrapperRef}
+      style={{ zIndex: showDropdown ? 9999 : 1 }}
+    >
       <InputComponent
         type={inputType === 'input' ? 'text' : undefined}
         className={inputType === 'textarea' ? 'form-textarea' : 'form-input'}
