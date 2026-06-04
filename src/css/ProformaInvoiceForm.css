@@ -511,6 +511,7 @@
 
 .form-group:focus-within {
   transform: translateY(-2px);
+  z-index: 9999;
 }
 
 /* Loading animation */
