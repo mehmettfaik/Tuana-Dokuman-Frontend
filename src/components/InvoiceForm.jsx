@@ -401,7 +401,8 @@ IBAN :TR02 0003 2000 0320 0000 9679 79`
       };
 
       // API'ye istek gönder
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/pdf/generate-invoice-excel`, {
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${apiUrl}/api/pdf/generate-invoice-excel`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

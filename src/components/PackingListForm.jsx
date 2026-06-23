@@ -818,7 +818,8 @@ const PackingListForm = ({ selectedLanguage }) => {
       };
 
       // API'ye istek gönder
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/pdf/generate-packing-list-excel`, {
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${apiUrl}/api/pdf/generate-packing-list-excel`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
