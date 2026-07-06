@@ -28,6 +28,7 @@ const Announcements = ({ globalLang }) => {
 
   useEffect(() => {
     fetchAnnouncements();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [globalLang]);
 
   const handleAddAnnouncement = async (e) => {
