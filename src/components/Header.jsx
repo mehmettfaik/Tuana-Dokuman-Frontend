@@ -12,6 +12,7 @@ const Header = ({ onDocumentSelect, selectedDocType, selectedLanguage, globalLan
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [pendingDocType, setPendingDocType] = useState(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const fileInputRef = useRef(null);
   const navRef = useRef(null);
   const userMenuRef = useRef(null);
@@ -96,6 +97,7 @@ const Header = ({ onDocumentSelect, selectedDocType, selectedLanguage, globalLan
 
   const handleMenuItemClick = (docType) => {
     setActiveDropdown(null);
+    setIsMobileMenuOpen(false);
     if (docType === 'warehouse1-2') {
       window.open('https://docs.google.com/spreadsheets/d/1SrKeaEVLY4ttTk5Jf9jnqeWx5dh_4i60YDa6ZuOLuuw/edit?usp=sharing', '_blank');
     } else if (docType === 'archiveLink') {
@@ -217,6 +219,21 @@ const Header = ({ onDocumentSelect, selectedDocType, selectedLanguage, globalLan
     <>
       <header className="main-header">
         <div className="header-inner">
+          {/* Hamburger Menu Toggle (Mobile) */}
+          {currentUser && (
+            <button 
+              className="hamburger-btn" 
+              onClick={() => setIsMobileMenuOpen(true)}
+              aria-label="Toggle menu"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+              </svg>
+            </button>
+          )}
+
           {/* Logo */}
           <div
             className="header-logo"
@@ -226,9 +243,26 @@ const Header = ({ onDocumentSelect, selectedDocType, selectedLanguage, globalLan
             <img src="/logo192.png" alt="Tuana Tekstil" className="logo-img" />
           </div>
 
+          {/* Mobile Overlay */}
+          {currentUser && (
+            <div 
+              className={`mobile-overlay ${isMobileMenuOpen ? 'show' : ''}`} 
+              onClick={() => setIsMobileMenuOpen(false)}
+            />
+          )}
+
           {/* Navigation */}
           {currentUser && (
-            <nav className="header-nav" ref={navRef}>
+            <nav className={`header-nav ${isMobileMenuOpen ? 'mobile-open' : ''}`} ref={navRef}>
+              <div className="mobile-nav-header">
+                <span className="mobile-nav-title">Menü</span>
+                <button className="mobile-close-btn" onClick={() => setIsMobileMenuOpen(false)}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              </div>
               {Object.entries(menuItems).map(([key, menu]) => (
                 <div
                   key={key}
