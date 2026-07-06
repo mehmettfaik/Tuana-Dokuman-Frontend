@@ -37,11 +37,24 @@ const PriceOfferForm = ({ selectedLanguage }) => {
   // Yeni PDF generation hook'u
   const { isGenerating, error: pdfError, generatePDF: generatePDFWithHook } = usePDFGeneration();
 
+  const [isCustomTransport, setIsCustomTransport] = useState(false);
+
   const handleInputChange = (name, value) => {
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
+  };
+
+  const handleTransportTypeChange = (e) => {
+    const val = e.target.value;
+    if (val === '--Düzenlenebilir--') {
+      setIsCustomTransport(true);
+      handleInputChange('TRANSPORT TYPE', '');
+    } else {
+      setIsCustomTransport(false);
+      handleInputChange('TRANSPORT TYPE', val);
+    }
   };
 
   // Ürün verilerini güncelleme
@@ -126,6 +139,7 @@ const PriceOfferForm = ({ selectedLanguage }) => {
     
     setError('');
     setSuccess('');
+    setIsCustomTransport(false);
   };
 
   return (
@@ -253,15 +267,26 @@ const PriceOfferForm = ({ selectedLanguage }) => {
               <label className="form-label">TRANSPORT TYPE</label>
               <select
                 className="form-input"
-                value={formData['TRANSPORT TYPE']}
-                onChange={(e) => handleInputChange('TRANSPORT TYPE', e.target.value)}
+                value={isCustomTransport ? '--Düzenlenebilir--' : formData['TRANSPORT TYPE']}
+                onChange={handleTransportTypeChange}
               >
                 <option value="">Taşıma türü seçin</option>
                 <option value="CIF">CIF</option>
                 <option value="FOB">FOB</option>
                 <option value="EXW">EXW</option>
                 <option value="DAP">DAP</option>
+                <option value="--Düzenlenebilir--">--Düzenlenebilir--</option>
               </select>
+              {isCustomTransport && (
+                <input
+                  type="text"
+                  className="form-input"
+                  style={{ marginTop: "8px" }}
+                  value={formData['TRANSPORT TYPE']}
+                  onChange={(e) => handleInputChange('TRANSPORT TYPE', e.target.value)}
+                  placeholder="Taşıma türünü girin"
+                />
+              )}
             </div>
           </div>
         </div>

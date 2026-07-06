@@ -23,27 +23,13 @@ body {
 
 .app-content {
   flex: 1;
-  padding: 20px;
-  max-width: 1400px;
+  padding: 24px;
+  max-width: 1200px;
   width: 100%;
   margin: 0 auto;
-  max-width: 1200px;
   display: flex;
   flex-direction: column;
-  gap: 30px;
-}
-
-.document-selector {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  padding: 30px;
-  border-radius: 15px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  animation: fadeInUp 0.8s ease-out 0.2s both;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+  gap: 24px;
 }
 
 @keyframes fadeInUp {
@@ -55,75 +41,6 @@ body {
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-.document-selector label {
-  display: block;
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 15px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.document-selector select {
-  width: 100%;
-  padding: 15px 20px;
-  font-size: 1.1rem;
-  border: 2px solid #e0e0e0;
-  border-radius: 10px;
-  background: white;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  outline: none;
-}
-
-.document-selector select:focus {
-  border-color: #333;
-  box-shadow: 0 0 0 3px rgba(51, 51, 51, 0.1);
-  transform: translateY(-2px);
-}
-
-.document-selector select:hover {
-  border-color: #bbb;
-}
-
-/* Language Selector Styles */
-.language-selector {
-  margin-top: 10px;
-}
-
-.language-selector label {
-  display: block;
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 15px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.language-selector select {
-  width: 100%;
-  padding: 15px 20px;
-  font-size: 1.1rem;
-  border: 2px solid #e0e0e0;
-  border-radius: 10px;
-  background: white;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  outline: none;
-}
-
-.language-selector select:focus {
-  border-color: #333;
-  box-shadow: 0 0 0 3px rgba(51, 51, 51, 0.1);
-  transform: translateY(-2px);
-}
-
-.language-selector select:hover {
-  border-color: #bbb;
 }
 
 .document-form {

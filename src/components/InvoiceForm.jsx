@@ -99,6 +99,36 @@ const InvoiceForm = ({ selectedLanguage }) => {
   const [selectedFormId, setSelectedFormId] = useState(null);
   const [formsError, setFormsError] = useState('');
   const [initialDataStr, setInitialDataStr] = useState(null);
+  const [isCustomTransport, setIsCustomTransport] = useState(false);
+
+  useEffect(() => {
+    if (!selectedLanguage) return;
+    const lang = selectedLanguage.toLowerCase();
+    setFormData(prev => {
+      const currentVal = prev['Country of Origin'];
+      if (lang === 'tr') {
+        if (currentVal === '' || currentVal === 'TURKEY' || currentVal === 'TÜRKİYE') {
+          return { ...prev, 'Country of Origin': 'TÜRKİYE' };
+        }
+      } else if (lang === 'en') {
+        if (currentVal === '' || currentVal === 'TURKEY' || currentVal === 'TÜRKİYE') {
+          return { ...prev, 'Country of Origin': 'TURKEY' };
+        }
+      }
+      return prev;
+    });
+  }, [selectedLanguage]);
+
+  const handleTransportTypeChange = (e) => {
+    const val = e.target.value;
+    if (val === '--Düzenlenebilir--') {
+      setIsCustomTransport(true);
+      handleInputChange('Transport Type', '');
+    } else {
+      setIsCustomTransport(false);
+      handleInputChange('Transport Type', val);
+    }
+  };
 
   // Sayfa yüklendiğinde geçmiş belgeleri yükle
   useEffect(() => {
@@ -125,7 +155,16 @@ const InvoiceForm = ({ selectedLanguage }) => {
     try {
       const formRecord = await getFormRecord(formId);
       
-      if (formRecord.formData) setFormData(formRecord.formData);
+      if (formRecord.formData) {
+        setFormData(formRecord.formData);
+        const transportVal = formRecord.formData['Transport Type'] || '';
+        const standardOptions = ['CIF', 'FOB', 'EXW', 'DAP'];
+        if (transportVal && !standardOptions.includes(transportVal)) {
+          setIsCustomTransport(true);
+        } else {
+          setIsCustomTransport(false);
+        }
+      }
       
       // Ürün listesini doldur - birden fazla yerde olabilir
       let goodsData = null;
@@ -509,6 +548,7 @@ IBAN :TR02 0003 2000 0320 0000 9679 79`
     
     // Manuel giriş durumunu da sıfırla
     setIsCustomEntry(false);
+    setIsCustomTransport(false);
     
     setError('');
     setSuccess('');
@@ -1018,15 +1058,26 @@ IBAN :TR02 0003 2000 0320 0000 9679 79`
               <label className="form-label">Transport Type</label>
               <select
                 className="form-input"
-                value={formData['Transport Type']}
-                onChange={(e) => handleInputChange('Transport Type', e.target.value)}
+                value={isCustomTransport ? '--Düzenlenebilir--' : formData['Transport Type']}
+                onChange={handleTransportTypeChange}
               >
                 <option value="">Taşıma türü seçin</option>
                 <option value="CIF">CIF</option>
                 <option value="FOB">FOB</option>
                 <option value="EXW">EXW</option>
                 <option value="DAP">DAP</option>
+                <option value="--Düzenlenebilir--">--Düzenlenebilir--</option>
               </select>
+              {isCustomTransport && (
+                <input
+                  type="text"
+                  className="form-input"
+                  style={{ marginTop: "8px" }}
+                  value={formData['Transport Type']}
+                  onChange={(e) => handleInputChange('Transport Type', e.target.value)}
+                  placeholder="Taşıma türünü girin"
+                />
+              )}
             </div>
             
             <div className="form-group">

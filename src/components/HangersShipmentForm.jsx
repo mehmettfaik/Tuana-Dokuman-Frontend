@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import usePDFGeneration from '../hooks/usePDFGeneration';
 import RecipientManager from './RecipientManager';
 import '../css/HangersShipmentForm.css';
@@ -97,6 +97,36 @@ const handleCourierChange = (value) => {
 
   // Manuel giriş durumunu takip etmek için ayrı state
   const [isCustomEntry, setIsCustomEntry] = useState(false);
+  const [isCustomTransport, setIsCustomTransport] = useState(false);
+
+  useEffect(() => {
+    if (!selectedLanguage) return;
+    const lang = selectedLanguage.toLowerCase();
+    setFormData(prev => {
+      const currentVal = prev['COUNTRY OF ORIGIN'];
+      if (lang === 'tr') {
+        if (currentVal === '' || currentVal === 'TURKEY' || currentVal === 'TÜRKİYE') {
+          return { ...prev, 'COUNTRY OF ORIGIN': 'TÜRKİYE' };
+        }
+      } else if (lang === 'en') {
+        if (currentVal === '' || currentVal === 'TURKEY' || currentVal === 'TÜRKİYE') {
+          return { ...prev, 'COUNTRY OF ORIGIN': 'TURKEY' };
+        }
+      }
+      return prev;
+    });
+  }, [selectedLanguage]);
+
+  const handleTransportTypeChange = (e) => {
+    const val = e.target.value;
+    if (val === '--Düzenlenebilir--') {
+      setIsCustomTransport(true);
+      handleInputChange('TRANSPORT TYPE', '');
+    } else {
+      setIsCustomTransport(false);
+      handleInputChange('TRANSPORT TYPE', val);
+    }
+  };
 
   // Sorumlu kişi seçimi değiştiğinde çalışan fonksiyon
   const handleResponsiblePersonChange = (selectedPersonName) => {
@@ -260,6 +290,7 @@ const handleCourierChange = (value) => {
     
     // Manuel giriş durumunu da sıfırla
     setIsCustomEntry(false);
+    setIsCustomTransport(false);
     
     setError('');
     setSuccess('');
@@ -614,8 +645,8 @@ const handleCourierChange = (value) => {
               <label className="form-label">TRANSPORT TYPE</label>
               <select
                 className="form-input"
-                value={formData['TRANSPORT TYPE']}
-                onChange={(e) => handleInputChange('TRANSPORT TYPE', e.target.value)}
+                value={isCustomTransport ? '--Düzenlenebilir--' : formData['TRANSPORT TYPE']}
+                onChange={handleTransportTypeChange}
               >
                 <option value="">Taşıma türü seçin</option>
                 <option value="CIF">CIF</option>
@@ -624,7 +655,18 @@ const handleCourierChange = (value) => {
                 <option value="DAP">DAP</option>
                 <option value="DDP">DDP</option>
                 <option value="FCA">FCA</option>
+                <option value="--Düzenlenebilir--">--Düzenlenebilir--</option>
               </select>
+              {isCustomTransport && (
+                <input
+                  type="text"
+                  className="form-input"
+                  style={{ marginTop: "8px" }}
+                  value={formData['TRANSPORT TYPE']}
+                  onChange={(e) => handleInputChange('TRANSPORT TYPE', e.target.value)}
+                  placeholder="Taşıma türünü girin"
+                />
+              )}
             </div>
             
             <div className="form-group">

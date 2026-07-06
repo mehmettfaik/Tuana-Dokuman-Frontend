@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import usePDFGeneration from '../hooks/usePDFGeneration';
 import RecipientManager from './RecipientManager';
 import '../css/OrderConfirmationForm.css';
@@ -87,6 +87,36 @@ const OrderConfirmationForm = ({ selectedLanguage }) => {
 
   // Manuel giriş durumunu takip etmek için ayrı state
   const [isCustomEntry, setIsCustomEntry] = useState(false);
+  const [isCustomTransport, setIsCustomTransport] = useState(false);
+
+  useEffect(() => {
+    if (!selectedLanguage) return;
+    const lang = selectedLanguage.toLowerCase();
+    setFormData(prev => {
+      const currentVal = prev['Country of Origin'];
+      if (lang === 'tr') {
+        if (currentVal === '' || currentVal === 'TURKEY' || currentVal === 'TÜRKİYE') {
+          return { ...prev, 'Country of Origin': 'TÜRKİYE' };
+        }
+      } else if (lang === 'en') {
+        if (currentVal === '' || currentVal === 'TURKEY' || currentVal === 'TÜRKİYE') {
+          return { ...prev, 'Country of Origin': 'TURKEY' };
+        }
+      }
+      return prev;
+    });
+  }, [selectedLanguage]);
+
+  const handleTransportTypeChange = (e) => {
+    const val = e.target.value;
+    if (val === '--Düzenlenebilir--') {
+      setIsCustomTransport(true);
+      handleInputChange('Transport Type', '');
+    } else {
+      setIsCustomTransport(false);
+      handleInputChange('Transport Type', val);
+    }
+  };
 
   // Sorumlu kişi seçimi değiştiğinde çalışan fonksiyon
   const handleResponsiblePersonChange = (selectedPersonName) => {
@@ -265,6 +295,7 @@ const OrderConfirmationForm = ({ selectedLanguage }) => {
     
     // Manuel giriş durumunu da sıfırla
     setIsCustomEntry(false);
+    setIsCustomTransport(false);
     
     setError('');
     setSuccess('');
@@ -598,15 +629,26 @@ const OrderConfirmationForm = ({ selectedLanguage }) => {
               <label className="form-label">Transport Type</label>
               <select
                 className="form-input"
-                value={formData['Transport Type']}
-                onChange={(e) => handleInputChange('Transport Type', e.target.value)}
+                value={isCustomTransport ? '--Düzenlenebilir--' : formData['Transport Type']}
+                onChange={handleTransportTypeChange}
               >
                 <option value="">Taşıma türü seçin</option>
                 <option value="CIF">CIF</option>
                 <option value="FOB">FOB</option>
                 <option value="EXW">EXW</option>
                 <option value="DAP">DAP</option>
+                <option value="--Düzenlenebilir--">--Düzenlenebilir--</option>
               </select>
+              {isCustomTransport && (
+                <input
+                  type="text"
+                  className="form-input"
+                  style={{ marginTop: "8px" }}
+                  value={formData['Transport Type']}
+                  onChange={(e) => handleInputChange('Transport Type', e.target.value)}
+                  placeholder="Taşıma türünü girin"
+                />
+              )}
             </div>
             
             <div className="form-group">
