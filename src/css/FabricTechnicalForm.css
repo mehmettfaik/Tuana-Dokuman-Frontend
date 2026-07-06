@@ -286,7 +286,7 @@
 /* Responsive tasarım */
 @media (max-width: 768px) {
   .fabric-form-container {
-    margin: 10px;
+    margin: 0;
     padding: 20px;
   }
   

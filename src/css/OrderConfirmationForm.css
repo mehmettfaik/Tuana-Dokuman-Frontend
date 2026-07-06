@@ -381,7 +381,7 @@
 /* Responsive Design */
 @media (max-width: 768px) {
   .order-confirmation-form-container {
-    margin: 10px;
+    margin: 0;
     padding: 20px;
   }
   

@@ -159,3 +159,69 @@ body {
   border: 1px solid #4caf50;
   color: #2e7d32;
 }
+
+/* Global Mobile Form Responsiveness Fixes */
+@media (max-width: 768px) {
+  /* Prevent body scrolling horizontally */
+  body {
+    overflow-x: hidden;
+  }
+  
+  .app-content {
+    padding: 10px;
+    gap: 12px;
+    width: 100%;
+    max-width: 100vw;
+    box-sizing: border-box;
+  }
+  
+  /* Reset container margins/paddings that cause overflow */
+  [class*="-form-container"], [class*="-container"] {
+    margin: 0 auto !important;
+    padding: 15px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  [class*="form-section"] {
+    padding: 15px !important;
+    margin-bottom: 15px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Force grids to single column on mobile to prevent squishing/overflow */
+  [class*="form-grid"], 
+  [class*="notes-grid"], 
+  [class*="care-instructions-grid"],
+  [class*="goods-grid-row"],
+  [class*="measurement-row"] {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  /* Make inputs fit */
+  input, textarea, select {
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Let tables scroll horizontally instead of breaking the layout */
+  [class*="table-container"], table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Fix flexbox rows that don't wrap */
+  .form-row, .goods-header, .form-actions {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  
+  .btn {
+    width: 100% !important;
+  }
+}

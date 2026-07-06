@@ -397,7 +397,7 @@
 @media (max-width: 768px) {
   .siparis-form-container {
     padding: 20px;
-    margin: 10px;
+    margin: 0;
   }
   
   .siparis-form-header h2 {
