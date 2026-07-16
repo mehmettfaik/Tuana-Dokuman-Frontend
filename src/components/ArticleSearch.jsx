@@ -65,8 +65,22 @@ const ArticleSearch = ({ value, onSelect, onChange, placeholder, inputType = 'in
 
       const result = await response.json();
       const data = result.data || [];
-      setSearchResults(Array.isArray(data) ? data : []);
-      setShowDropdown(data.length > 0);
+      
+      // Filter out duplicate records
+      const uniqueData = [];
+      const seen = new Set();
+      const dataArray = Array.isArray(data) ? data : [];
+      
+      dataArray.forEach(item => {
+        const key = `${item.articleNumber}-${item.fabricWeightWidth || ''}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          uniqueData.push(item);
+        }
+      });
+
+      setSearchResults(uniqueData);
+      setShowDropdown(uniqueData.length > 0);
     } catch (error) {
       console.error('Article search error:', error);
       setSearchResults([]);
