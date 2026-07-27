@@ -324,6 +324,11 @@ class PDFService {
         const safePriceOfferNumber = priceOfferNumber.replace(/[^a-zA-Z0-9-_\s]/g, '').replace(/\s+/g, '-');
         return `${safePriceOfferNumber}_${isTurkish ? 'Fiyat-Teklifi' : 'Price-Offer'}.pdf`;
         
+      case 'price-list':
+        const priceListNumber = formData['PRICE LIST NUMBER'] || 'No-Price-List-Number';
+        const safePriceListNumber = priceListNumber.replace(/[^a-zA-Z0-9-_\s]/g, '').replace(/\s+/g, '-');
+        return `${safePriceListNumber}_${isTurkish ? 'Fiyat-Listesi' : 'Price-List'}.pdf`;
+        
       case 'fabric-technical':
         const articleCode = formData['ARTICLE CODE'] || 'Technical';
         const safeArticleCode = articleCode.replace(/[^a-zA-Z0-9-_\s]/g, '').replace(/\s+/g, '-');

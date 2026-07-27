@@ -25,6 +25,7 @@ const Header = ({ onDocumentSelect, selectedDocType, selectedLanguage, globalLan
         { key: 'proformaInvoice', label: { tr: 'PROFORMA FATURA', en: 'PROFORMA INVOICE' } },
         { key: 'invoice', label: { tr: 'FATURA', en: 'INVOICE' } },
         { key: 'priceOffer', label: { tr: 'FİYAT TEKLİFİ', en: 'PRICE OFFER' } },
+        { key: 'priceList', label: { tr: 'FİYAT LİSTESİ', en: 'PRICE LIST' } },
         { key: 'creditNote', label: { tr: 'KREDİ NOTU', en: 'CREDIT NOTE' } },
         { key: 'debitNote', label: { tr: 'BORÇ NOTU', en: 'DEBIT NOTE' } },
       ]
