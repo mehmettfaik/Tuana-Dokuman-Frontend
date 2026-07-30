@@ -3,7 +3,7 @@ import axios from 'axios';
 import { auth } from './firebase/config';
 
 export const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:3001',
+  baseURL: import.meta.env.REACT_APP_API_URL || 'http://localhost:3001',
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',

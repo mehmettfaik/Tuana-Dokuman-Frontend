@@ -330,8 +330,8 @@
 }
 
 .checkbox-label {
-  display: flex;
-  align-items: center;
+  display: flex !important;
+  align-items: center !important;
   gap: 8px;
   cursor: pointer;
   user-select: none;
@@ -344,17 +344,22 @@
 }
 
 .checkmark {
-  display: inline-block;
-  width: 18px;
-  height: 18px;
-  background: #fff;
-  border: 2px solid #ddd;
-  border-radius: 3px;
   position: relative;
+  display: inline-block;
+  height: 20px;
+  width: 20px;
+  min-width: 20px;
+  min-height: 20px;
+  flex-shrink: 0;
+  background-color: #fff;
+  border: 2px solid #e0e0e0;
+  border-radius: 4px;
+  margin-right: 10px;
   transition: all 0.3s ease;
 }
 
 .checkbox-label input[type="checkbox"]:checked + .checkmark {
+  flex-shrink: 0;
   background: #333;
   border-color: #333;
 }

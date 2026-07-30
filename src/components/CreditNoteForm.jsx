@@ -876,12 +876,44 @@ const CreditNoteForm = ({ selectedLanguage }) => {
           </button>
         </div>
 
-        {/* Loading Spinner */}
+        {/* Loading Spinner Overlay */}
         {isGenerating && (
-          <div className="loading-spinner">
-            <div className="spinner"></div>
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            zIndex: 9999,
+            borderRadius: '8px'
+          }}>
+            <div style={{
+              position: 'sticky',
+              top: '50vh',
+              transform: 'translateY(-50%)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingBottom: '20vh'
+            }}>
+            <div className="spinner" style={{
+              border: '6px solid #ffffff',
+              borderTop: '6px solid #000000',
+              borderRadius: '50%',
+              width: '60px',
+              height: '60px',
+              animation: 'spin 1.5s linear infinite',
+              marginBottom: '20px'
+            }}></div>
+            <h2 style={{ color: 'white', letterSpacing: '1px' }}>
+              'PDF Oluşturuluyor...'
+            </h2>
+            </div>
           </div>
         )}
+
       </form>
     </div>
   );

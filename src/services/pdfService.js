@@ -3,7 +3,7 @@ import { auth } from '../firebase/config';
 
 class PDFService {
   constructor() {
-    this.baseURL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+    this.baseURL = import.meta.env.REACT_APP_API_URL || 'http://localhost:3001';
   }
 
   // Helper to get current user's ID token (if logged in)

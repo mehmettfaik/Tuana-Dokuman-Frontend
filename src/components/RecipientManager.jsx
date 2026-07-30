@@ -38,7 +38,7 @@ const RecipientManager = ({ onRecipientSelect, selectedRecipient }) => {
   };
 
   // API base URL (use env var in production, fallback to localhost for local dev)
-  const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+  const apiUrl = import.meta.env.REACT_APP_API_URL || 'http://localhost:3001';
 
   // API çağrıları
   const fetchRecipients = React.useCallback(async () => {

@@ -1,10 +1,13 @@
 // src/components/Header.jsx
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { auth } from '../firebase/config';
 import '../css/Header.css';
 
-const Header = ({ onDocumentSelect, selectedDocType, selectedLanguage, globalLang, onGlobalLangToggle }) => {
+const Header = ({ selectedLanguage, setSelectedLanguage, globalLang, onGlobalLangToggle }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const { currentUser, logout } = useAuth();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -16,6 +19,11 @@ const Header = ({ onDocumentSelect, selectedDocType, selectedLanguage, globalLan
   const fileInputRef = useRef(null);
   const navRef = useRef(null);
   const userMenuRef = useRef(null);
+
+  // Extract selectedDocType from location path
+  const selectedDocType = location.pathname.startsWith('/docs/') 
+    ? location.pathname.split('/docs/')[1] 
+    : location.pathname.replace('/', '');
 
   // Navigation menu structure
   const menuItems = {
@@ -62,8 +70,6 @@ const Header = ({ onDocumentSelect, selectedDocType, selectedLanguage, globalLan
     }
   };
 
-  // Removed local headerLang state, using globalLang from props
-
   // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -99,6 +105,7 @@ const Header = ({ onDocumentSelect, selectedDocType, selectedLanguage, globalLan
   const handleMenuItemClick = (docType) => {
     setActiveDropdown(null);
     setIsMobileMenuOpen(false);
+    
     if (docType === 'warehouse1-2') {
       window.open('https://docs.google.com/spreadsheets/d/1SrKeaEVLY4ttTk5Jf9jnqeWx5dh_4i60YDa6ZuOLuuw/edit?usp=sharing', '_blank');
     } else if (docType === 'archiveLink') {
@@ -113,9 +120,10 @@ const Header = ({ onDocumentSelect, selectedDocType, selectedLanguage, globalLan
 
   const handleLanguageSelect = (lang) => {
     setShowLanguageModal(false);
-    if (onDocumentSelect) {
-      onDocumentSelect(pendingDocType, lang);
+    if (setSelectedLanguage) {
+      setSelectedLanguage(lang);
     }
+    navigate(`/docs/${pendingDocType}`);
     setPendingDocType(null);
   };
 
@@ -152,7 +160,7 @@ const Header = ({ onDocumentSelect, selectedDocType, selectedLanguage, globalLan
         formData.append('photos', file);
       });
 
-      const API_BASE = process.env.REACT_APP_API_URL || window.location.origin || 'http://localhost:3001';
+      const API_BASE = import.meta.env.REACT_APP_API_URL || window.location.origin || 'http://localhost:3001';
 
       const response = await fetch(`${API_BASE}/api/excel/create-from-photos`, {
         method: 'POST',
@@ -238,7 +246,7 @@ const Header = ({ onDocumentSelect, selectedDocType, selectedLanguage, globalLan
           {/* Logo */}
           <div
             className="header-logo"
-            onClick={() => onDocumentSelect && onDocumentSelect(null, null)}
+            onClick={() => navigate('/')}
             style={{ cursor: 'pointer' }}
           >
             <img src="/logo192.png" alt="Tuana Tekstil" className="logo-img" />

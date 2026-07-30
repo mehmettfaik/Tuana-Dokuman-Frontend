@@ -19,7 +19,7 @@ const ArticleSearch = ({ value, onSelect, onChange, placeholder, inputType = 'in
   const [isLoading, setIsLoading] = useState(false);
   const searchTimeoutRef = useRef(null);
   const wrapperRef = useRef(null);
-  const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+  const apiUrl = import.meta.env.REACT_APP_API_URL || 'http://localhost:3001';
 
   // Click outside to close dropdown
   useEffect(() => {

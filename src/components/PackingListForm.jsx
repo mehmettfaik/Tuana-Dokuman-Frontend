@@ -553,7 +553,7 @@ const PackingListForm = ({ selectedLanguage }) => {
       const user = auth.currentUser;
       const token = user ? await user.getIdToken() : null;
 
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+      const apiUrl = import.meta.env.REACT_APP_API_URL || 'http://localhost:3001';
       const headers = {
         'Content-Type': 'application/json',
       };
@@ -610,7 +610,7 @@ const PackingListForm = ({ selectedLanguage }) => {
   // Backend bağlantı testi fonksiyonu
   const testBackendConnection = async () => {
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+      const apiUrl = import.meta.env.REACT_APP_API_URL || 'http://localhost:3001';
       // Health check genellikle public olmalı, ama yine de token ekliyoruz
       const user = auth.currentUser;
       const token = user ? await user.getIdToken() : null;
@@ -669,7 +669,7 @@ const PackingListForm = ({ selectedLanguage }) => {
       const token = user ? await user.getIdToken() : null;
 
       // Backend'e gönder
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+      const apiUrl = import.meta.env.REACT_APP_API_URL || 'http://localhost:3001';
       const headers = {};
       if (token) headers.Authorization = `Bearer ${token}`;
 
@@ -855,7 +855,7 @@ const PackingListForm = ({ selectedLanguage }) => {
       };
 
       // API'ye istek gönder
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+      const apiUrl = import.meta.env.REACT_APP_API_URL || 'http://localhost:3001';
       const response = await fetch(`${apiUrl}/api/pdf/generate-packing-list-excel`, {
         method: 'POST',
         headers: {
@@ -1874,12 +1874,44 @@ const PackingListForm = ({ selectedLanguage }) => {
           </button>
         </div>
 
-        {/* Loading Spinner */}
+        {/* Loading Spinner Overlay */}
         {(isGenerating || isExcelGenerating) && (
-          <div className="loading-spinner">
-            <div className="spinner"></div>
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            zIndex: 9999,
+            borderRadius: '8px'
+          }}>
+            <div style={{
+              position: 'sticky',
+              top: '50vh',
+              transform: 'translateY(-50%)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingBottom: '20vh'
+            }}>
+            <div className="spinner" style={{
+              border: '6px solid #ffffff',
+              borderTop: '6px solid #000000',
+              borderRadius: '50%',
+              width: '60px',
+              height: '60px',
+              animation: 'spin 1.5s linear infinite',
+              marginBottom: '20px'
+            }}></div>
+            <h2 style={{ color: 'white', letterSpacing: '1px' }}>
+              {isExcelGenerating ? 'Excel Oluşturuluyor...' : 'PDF Oluşturuluyor...'}
+            </h2>
+            </div>
           </div>
         )}
+
       </form>
     </div>
   );

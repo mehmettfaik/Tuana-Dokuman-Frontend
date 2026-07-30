@@ -3,6 +3,7 @@ import usePDFGeneration from '../hooks/usePDFGeneration';
 import SystemStatus from './SystemStatus';
 import RecipientManager from './RecipientManager';
 import ArticleSearch from './ArticleSearch';
+import InvoiceGoodsTable from './InvoiceGoodsTable';
 import { createFormRecord, getFormRecords, getFormRecord, deleteFormRecord } from '../api';
 import { auth } from '../firebase/config';
 import '../css/ProformaInvoiceForm.css';
@@ -440,7 +441,7 @@ IBAN :TR02 0003 2000 0320 0000 9679 79`
       };
 
       // API'ye istek gönder
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+      const apiUrl = import.meta.env.REACT_APP_API_URL || 'http://localhost:3001';
       const response = await fetch(`${apiUrl}/api/pdf/generate-invoice-excel`, {
         method: 'POST',
         headers: {
@@ -1126,124 +1127,14 @@ IBAN :TR02 0003 2000 0320 0000 9679 79`
           </div>
         </div>
 
-        {/* Description of Goods Section */}
-        <div className="form-section">
-          <div className="goods-header">
-            <h3 className="section-title">DESCRIPTION OF GOODS</h3>
-            <button
-              type="button"
-              className="btn btn-add-goods"
-              onClick={addGoods}
-            >
-              + Yeni Ürün Ekle
-            </button>
-          </div>
-          
-          {goods.map((item, index) => (
-            <div key={item.id} className="goods-item">
-              <div className="goods-item-header">
-                <h4 className="goods-item-title">Ürün #{index + 1}</h4>
-                {goods.length > 1 && (
-                  <button
-                    type="button"
-                    className="btn btn-remove-goods"
-                    onClick={() => removeGoods(item.id)}
-                  >
-                    × Sil
-                  </button>
-                )}
-              </div>
-              
-              <div className="goods-container">
-                <div className="goods-grid-row">
-                  <div className="form-group">
-                    <label className="form-label">ARTICLE NUMBER</label>
-                    <ArticleSearch
-                      value={item['ARTICLE NUMBER']}
-                      onChange={(val) => handleGoodsChange(item.id, 'ARTICLE NUMBER', val)}
-                      onSelect={(article) => {
-                        handleGoodsChange(item.id, 'ARTICLE NUMBER', article.articleNumber);
-                        if (article.fabricWeightWidth) {
-                          handleGoodsChange(item.id, 'WEIGHT / WIDHT', article.fabricWeightWidth);
-                        }
-                      }}
-                      placeholder="Ürün numarası"
-                    />
-                  </div>
-                  
-                  <div className="form-group">
-                    <label className="form-label">WEIGHT / WIDHT</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      value={item['WEIGHT / WIDHT']}
-                      onChange={(e) => handleGoodsChange(item.id, 'WEIGHT / WIDHT', e.target.value)}
-                      placeholder="Ağırlık / Genişlik"
-                    />
-                  </div>
-                  
-                  <div className="form-group">
-                    <label className="form-label">QUANTITY (METERS)</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      value={item['QUANTITY (METERS)']}
-                      onChange={(e) => handleGoodsChange(item.id, 'QUANTITY (METERS)', e.target.value)}
-                      onKeyPress={(e) => {
-                        if (e.key === ',') {
-                          e.preventDefault();
-                        }
-                      }}
-                      placeholder="Miktar (metre)"
-                      step="0.01"
-                    />
-                  </div>
-                </div>
-                
-                <div className="goods-grid-row">
-                  <div className="form-group">
-                    <label className="form-label">PRICE</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      value={item['PRICE']}
-                      onChange={(e) => handleGoodsChange(item.id, 'PRICE', e.target.value)}
-                      onKeyPress={(e) => {
-                        if (e.key === ',') {
-                          e.preventDefault();
-                        }
-                      }}
-                      placeholder="Birim fiyat (USD/EUR) Belirtiniz"
-                    />
-                  </div>
-                  
-                  <div className="form-group">
-                    <label className="form-label">AMOUNT</label>
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                      <input
-                        type="text"
-                        className="form-input"
-                        value={item['AMOUNT']}
-                        onChange={(e) => handleGoodsChange(item.id, 'AMOUNT', e.target.value)}
-                        placeholder="Toplam tutar (otom. hesaplanır)"
-                        style={{ backgroundColor: '#f8f9fa', cursor: 'default', flex: '1' }}
-                      />
-                      <select
-                        className="form-input"
-                        value={item['CURRENCY']}
-                        onChange={(e) => handleGoodsChange(item.id, 'CURRENCY', e.target.value)}
-                        style={{ width: '80px', flex: '0 0 80px' }}
-                      >
-                        <option value="€ EUR">€ EUR</option>
-                        <option value="$ USD">$ USD</option>
-                        <option value="₺ TRY">₺ TRY</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}        </div>
+        {/* Description of Goods Section extracted */} 
+        <InvoiceGoodsTable
+          goods={goods}
+          handleGoodsChange={handleGoodsChange}
+          addGoods={addGoods}
+          removeGoods={removeGoods}
+        />
+
 
         {/* İmza ve Kaşe Checkbox */}
         <div className="form-section" style={{ marginTop: '20px' }}>
@@ -1304,24 +1195,44 @@ IBAN :TR02 0003 2000 0320 0000 9679 79`
           </button>
         </div>
 
-        {/* Loading Spinner */}
+        {/* Loading Spinner Overlay */}
         {(isGenerating || isExcelGenerating) && (
-          <div className="loading-spinner" style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginTop: '1rem'
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            zIndex: 9999,
+            borderRadius: '8px'
           }}>
+            <div style={{
+              position: 'sticky',
+              top: '50vh',
+              transform: 'translateY(-50%)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingBottom: '20vh'
+            }}>
             <div className="spinner" style={{
-              border: '4px solid #f3f3f3',
-              borderTop: '4px solid #3498db',
+              border: '6px solid #ffffff',
+              borderTop: '6px solid #000000',
               borderRadius: '50%',
-              width: '40px',
-              height: '40px',
-              animation: 'spin 2s linear infinite'
+              width: '60px',
+              height: '60px',
+              animation: 'spin 1.5s linear infinite',
+              marginBottom: '20px'
             }}></div>
+            <h2 style={{ color: 'white', letterSpacing: '1px' }}>
+              {isExcelGenerating ? 'Excel Oluşturuluyor...' : 'PDF Oluşturuluyor...'}
+            </h2>
+            </div>
           </div>
         )}
+
       </form>
     </div>
   );

@@ -39,11 +39,13 @@ body {
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
   }
 }
 
 .document-form {
+  position: relative;
+  overflow: hidden;
   animation: fadeInUp 0.8s ease-out 0.4s both;
 }
 

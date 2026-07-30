@@ -448,7 +448,7 @@ IBAN :TR02 0003 2000 0320 0000 9679 79`
       };
 
       // API'ye istek gönder
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+      const apiUrl = import.meta.env.REACT_APP_API_URL || 'http://localhost:3001';
       const response = await fetch(`${apiUrl}/api/pdf/generate-proforma-excel`, {
         method: 'POST',
         headers: {
@@ -1325,24 +1325,44 @@ IBAN :TR02 0003 2000 0320 0000 9679 79`
           </button>
         </div>
 
-        {/* Loading Spinner */}
+        {/* Loading Spinner Overlay */}
         {(isGenerating || isExcelGenerating) && (
-          <div className="loading-spinner" style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginTop: '1rem'
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            zIndex: 9999,
+            borderRadius: '8px'
           }}>
+            <div style={{
+              position: 'sticky',
+              top: '50vh',
+              transform: 'translateY(-50%)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingBottom: '20vh'
+            }}>
             <div className="spinner" style={{
-              border: '4px solid #f3f3f3',
-              borderTop: '4px solid #3498db',
+              border: '6px solid #ffffff',
+              borderTop: '6px solid #000000',
               borderRadius: '50%',
-              width: '40px',
-              height: '40px',
-              animation: 'spin 2s linear infinite'
+              width: '60px',
+              height: '60px',
+              animation: 'spin 1.5s linear infinite',
+              marginBottom: '20px'
             }}></div>
+            <h2 style={{ color: 'white', letterSpacing: '1px' }}>
+              {isExcelGenerating ? 'Excel Oluşturuluyor...' : 'PDF Oluşturuluyor...'}
+            </h2>
+            </div>
           </div>
         )}
+
       </form>
     </div>
   );

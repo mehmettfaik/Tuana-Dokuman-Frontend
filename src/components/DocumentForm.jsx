@@ -1,19 +1,21 @@
 // src/components/DocumentForm.jsx
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import { generatePDF } from '../api';
-import FabricTechnicalForm from './FabricTechnicalForm';
-import ProformaInvoiceForm from './ProformaInvoiceForm';
-import InvoiceForm from './InvoiceForm';
-import PackingListForm from './PackingListForm';
-import CreditNoteForm from './CreditNoteForm';
-import DebitNoteForm from './DebitNoteForm';
-import OrderConfirmationForm from './OrderConfirmationForm';
-import SiparisForm from './SiparisForm'; 
-import PriceOfferForm from './PriceOfferForm';
-import HangersShipmentForm from './HangersShipmentForm';
-import QualityControlForm from './QualityControlForm';
-import CekiListesiForm from './CekiListesiForm'; 
-import PriceListForm from './PriceListForm';
+import { useParams } from 'react-router-dom';
+
+const FabricTechnicalForm = lazy(() => import('./FabricTechnicalForm'));
+const ProformaInvoiceForm = lazy(() => import('./ProformaInvoiceForm'));
+const InvoiceForm = lazy(() => import('./InvoiceForm'));
+const PackingListForm = lazy(() => import('./PackingListForm'));
+const CreditNoteForm = lazy(() => import('./CreditNoteForm'));
+const DebitNoteForm = lazy(() => import('./DebitNoteForm'));
+const OrderConfirmationForm = lazy(() => import('./OrderConfirmationForm'));
+const SiparisForm = lazy(() => import('./SiparisForm')); 
+const PriceOfferForm = lazy(() => import('./PriceOfferForm'));
+const HangersShipmentForm = lazy(() => import('./HangersShipmentForm'));
+const QualityControlForm = lazy(() => import('./QualityControlForm'));
+const CekiListesiForm = lazy(() => import('./CekiListesiForm')); 
+const PriceListForm = lazy(() => import('./PriceListForm'));
 
 const fieldMap = {
   fiyatTeklif: [
@@ -24,7 +26,8 @@ const fieldMap = {
   ]
 };
 
-const DocumentForm = ({ selectedDocType, selectedLanguage }) => {
+const DocumentForm = ({ selectedLanguage, setSelectedLanguage }) => {
+  const { docType: selectedDocType } = useParams();
   const [formData, setFormData] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);

@@ -198,12 +198,14 @@
 .checkbox-group {
   display: flex;
   align-items: center;
+  gap: 15px;
+  flex-wrap: wrap;
   margin-bottom: 10px;
 }
 
 .checkbox-label {
-  display: flex;
-  align-items: center;
+  display: flex !important;
+  align-items: center !important;
   cursor: pointer;
   font-weight: 600;
   color: #333;
@@ -219,8 +221,12 @@
 
 .checkmark {
   position: relative;
+  display: inline-block;
   height: 20px;
   width: 20px;
+  min-width: 20px;
+  min-height: 20px;
+  flex-shrink: 0;
   background-color: #fff;
   border: 2px solid #e0e0e0;
   border-radius: 4px;
@@ -229,12 +235,12 @@
 }
 
 .checkbox-label:hover .checkmark {
-  border-color: e0e0e0;
+  border-color: #3498db;
 }
 
 .checkbox-label input:checked ~ .checkmark {
-  background-color: #e0e0e0;
-  border-color: #e0e0e0;
+  background-color: #3498db;
+  border-color: #3498db;
 }
 
 .checkmark:after {
