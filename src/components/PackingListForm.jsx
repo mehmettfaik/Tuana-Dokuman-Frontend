@@ -4,6 +4,7 @@ import RecipientManager from './RecipientManager';
 import { createFormRecord, getFormRecords, getFormRecord, deleteFormRecord } from '../api';
 import { auth } from '../firebase/config';
 import ArticleSearch from './ArticleSearch';
+import '../css/ProformaInvoiceForm.css';
 import '../css/PackingListForm.css';
 
 const PackingListForm = ({ selectedLanguage }) => {
