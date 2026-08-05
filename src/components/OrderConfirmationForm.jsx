@@ -13,7 +13,7 @@ const OrderConfirmationForm = ({ selectedLanguage }) => {
     },
     'CENK YELMEN': {
       name: 'CENK YELMEN',
-      telephone: '+39 333 289 46 99', 
+      telephone: '+39 333 289 46 99',
       email: 'CENK@TUANATEX.COM'
     }
   };
@@ -21,12 +21,12 @@ const OrderConfirmationForm = ({ selectedLanguage }) => {
   const [formData, setFormData] = useState({
     // Order Confirmation specific field
     'ORDER CONFIRMATION NUMBER': '',
-    
+
     // Responsible Person
     'RESPONSIBLE PERSON': '',
     'TELEPHONE': '',
     'EMAIL': '',
-    
+
     // Recipient
     'RECIPIENT Şirket Adı': '',
     'RECIPIENT Adres': '',
@@ -35,7 +35,7 @@ const OrderConfirmationForm = ({ selectedLanguage }) => {
     'RECIPIENT Sorumlu Kişi': '',
     'RECIPIENT Telefon': '',
     'RECIPIENT Email': '',
-    
+
     // Delivery Address
     'DELIVERY ADDRESS Şirket Adı': '',
     'DELIVERY ADDRESS Adres': '',
@@ -44,7 +44,7 @@ const OrderConfirmationForm = ({ selectedLanguage }) => {
     'DELIVERY ADDRESS Sorumlu Kişi': '',
     'DELIVERY ADDRESS Telefon': '',
     'DELIVERY ADDRESS Email': '',
-    
+
     // Payment & Shipping Details
     'Payment Terms': '',
     'Transport Type': '',
@@ -53,7 +53,7 @@ const OrderConfirmationForm = ({ selectedLanguage }) => {
     'Net Weight': '',
     'Rolls': '',
     'Lead Time': '',
-    
+
   });
 
   // Description of Goods - Ürün listesi
@@ -71,7 +71,7 @@ const OrderConfirmationForm = ({ selectedLanguage }) => {
 
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  
+
   // RECIPIENT bilgilerini DELIVERY ADDRESS'e kopyalama için state
   const [copyRecipientToDelivery, setCopyRecipientToDelivery] = useState(false);
 
@@ -121,7 +121,7 @@ const OrderConfirmationForm = ({ selectedLanguage }) => {
   // Sorumlu kişi seçimi değiştiğinde çalışan fonksiyon
   const handleResponsiblePersonChange = (selectedPersonName) => {
     const selectedPerson = responsiblePersons[selectedPersonName];
-    
+
     if (selectedPerson) {
       setIsCustomEntry(false);
       setFormData(prev => ({
@@ -166,7 +166,7 @@ const OrderConfirmationForm = ({ selectedLanguage }) => {
   // RECIPIENT bilgilerini DELIVERY ADDRESS'e kopyalama fonksiyonu
   const handleCopyToDelivery = (isChecked) => {
     setCopyRecipientToDelivery(isChecked);
-    
+
     if (isChecked) {
       setFormData(prev => ({
         ...prev,
@@ -186,12 +186,12 @@ const OrderConfirmationForm = ({ selectedLanguage }) => {
     setGoods(prev => prev.map(item => {
       if (item.id === id) {
         const updatedItem = { ...item, [field]: value };
-        
+
         // QUANTITY veya PRICE değiştiğinde AMOUNT'u otomatik hesapla
         if (field === 'QUANTITY (METERS)' || field === 'PRICE') {
           const quantity = parseFloat(field === 'QUANTITY (METERS)' ? value : updatedItem['QUANTITY (METERS)']) || 0;
           const price = parseFloat(field === 'PRICE' ? value : updatedItem['PRICE']) || 0;
-          
+
           // Miktar ve fiyat varsa çarpma işlemi yap
           if (quantity > 0 && price > 0) {
             updatedItem['AMOUNT'] = (quantity * price).toFixed(2);
@@ -199,7 +199,7 @@ const OrderConfirmationForm = ({ selectedLanguage }) => {
             updatedItem['AMOUNT'] = '';
           }
         }
-        
+
         return updatedItem;
       }
       return item;
@@ -238,11 +238,11 @@ const OrderConfirmationForm = ({ selectedLanguage }) => {
         ...formData,
         goods: goods
       };
-      
-      
+
+
       // Yeni 3-aşamalı PDF generation kullan
       const success = await generatePDFWithHook(combinedData, 'order-confirmation', selectedLanguage);
-      
+
       if (success) {
         setSuccess('Order Confirmation PDF başarıyla oluşturuldu ve indirildi!');
       }
@@ -280,7 +280,7 @@ const OrderConfirmationForm = ({ selectedLanguage }) => {
       'Rolls': '',
       'Lead Time': '',
     });
-    
+
     setGoods([{
       id: 1,
       'ARTICLE NUMBER': '',
@@ -289,14 +289,14 @@ const OrderConfirmationForm = ({ selectedLanguage }) => {
       'PRICE': '',
       'AMOUNT': ''
     }]);
-    
+
     // Checkbox'ı da sıfırla
     setCopyRecipientToDelivery(false);
-    
+
     // Manuel giriş durumunu da sıfırla
     setIsCustomEntry(false);
     setIsCustomTransport(false);
-    
+
     setError('');
     setSuccess('');
   };
@@ -313,7 +313,7 @@ const OrderConfirmationForm = ({ selectedLanguage }) => {
       {success && <div className="alert alert-success">{success}</div>}
 
       <form className="order-confirmation-form" onSubmit={handleSubmit}>
-        
+
         {/* Order Confirmation Number */}
         <div className="form-section">
           <h3 className="section-title">Order Confirmation Details</h3>
@@ -351,7 +351,7 @@ const OrderConfirmationForm = ({ selectedLanguage }) => {
                 ))}
                 <option value="custom">Diğer (Manuel Giriş)</option>
               </select>
-              
+
               {/* Manuel giriş için text input (sadece "Diğer" seçildiğinde göster) */}
               {isCustomEntry && (
                 <input
@@ -390,9 +390,9 @@ const OrderConfirmationForm = ({ selectedLanguage }) => {
         {/* Recipient Information */}
         <div className="form-section">
           <h3 className="section-title">Recipient Information</h3>
-          
+
           {/* Recipient Manager */}
-          <RecipientManager 
+          <RecipientManager
             onRecipientSelect={handleRecipientSelect}
             selectedRecipient={{
               companyName: formData['RECIPIENT Şirket Adı'],
@@ -404,7 +404,7 @@ const OrderConfirmationForm = ({ selectedLanguage }) => {
               email: formData['RECIPIENT Email']
             }}
           />
-          
+
           <div className="form-grid">
             <div className="form-group">
               <label className="form-label">RECIPIENT Şirket Adı</label>
@@ -569,7 +569,7 @@ const OrderConfirmationForm = ({ selectedLanguage }) => {
           </div>
         </div>
 
-                {/* Notes Section */}
+        {/* Notes Section */}
         <div className="form-section">
           <h3 className="section-title">NOTLAR</h3>
           <div className="form-grid">
@@ -587,44 +587,44 @@ const OrderConfirmationForm = ({ selectedLanguage }) => {
         </div>
 
 
-    {/* Payment & Shipping Details Section */}
+        {/* Payment & Shipping Details Section */}
         <div className="form-section">
           <h3 className="section-title">PAYMENT & SHIPPING DETAILS</h3>
           <div className="form-grid">
             <div className="form-group">
-  <label className="form-label">Payment Terms</label>
+              <label className="form-label">Payment Terms</label>
 
-  {/* Select Menü */}
-  <select
-    className="form-input"
-    value={formData['Payment Terms']}
-    onChange={(e) => handleInputChange('Payment Terms', e.target.value)}
-  >
-    <option value="">Ödeme vadesi seçin</option>
-    <option value=" DAYS">--Düzenlenebilir-- </option>
-    <option value="30 DAYS">30 DAYS</option>
-    <option value="60 DAYS">60 DAYS</option>
-    <option value="90 DAYS">90 DAYS</option>
-    <option value="120 DAYS">120 DAYS</option>
-    <option value="150 DAYS">150 DAYS</option>
-    <option value="180 DAYS">180 DAYS</option>
-    <option value="IMMEDIATELY">IMMEDIATELY</option>
-    <option value="ADVANCED PAYMENT">ADVANCED PAYMENT</option>
-  </select>
+              {/* Select Menü */}
+              <select
+                className="form-input"
+                value={formData['Payment Terms']}
+                onChange={(e) => handleInputChange('Payment Terms', e.target.value)}
+              >
+                <option value="">Ödeme vadesi seçin</option>
+                <option value=" DAYS">--Düzenlenebilir-- </option>
+                <option value="30 DAYS">30 DAYS</option>
+                <option value="60 DAYS">60 DAYS</option>
+                <option value="90 DAYS">90 DAYS</option>
+                <option value="120 DAYS">120 DAYS</option>
+                <option value="150 DAYS">150 DAYS</option>
+                <option value="180 DAYS">180 DAYS</option>
+                <option value="IMMEDIATELY">IMMEDIATELY</option>
+                <option value="ADVANCED PAYMENT">ADVANCED PAYMENT</option>
+              </select>
 
-  {/* Seçilen değer düzenlenebilir input */}
-  {formData["Payment Terms"] !== "" && (
-    <input
-      type="text"
-      className="form-input"
-      style={{ marginTop: "8px" }}
-      value={formData["Payment Terms"]}
-      onChange={(e) => handleInputChange("Payment Terms", e.target.value)}
-      placeholder="Ödeme vadesini düzenle"
-    />
-  )}
-</div>
-            
+              {/* Seçilen değer düzenlenebilir input */}
+              {formData["Payment Terms"] !== "" && (
+                <input
+                  type="text"
+                  className="form-input"
+                  style={{ marginTop: "8px" }}
+                  value={formData["Payment Terms"]}
+                  onChange={(e) => handleInputChange("Payment Terms", e.target.value)}
+                  placeholder="Ödeme vadesini düzenle"
+                />
+              )}
+            </div>
+
             <div className="form-group">
               <label className="form-label">Transport Type</label>
               <select
@@ -650,7 +650,7 @@ const OrderConfirmationForm = ({ selectedLanguage }) => {
                 />
               )}
             </div>
-            
+
             <div className="form-group">
               <label className="form-label">Country of Origin</label>
               <input
@@ -661,7 +661,7 @@ const OrderConfirmationForm = ({ selectedLanguage }) => {
                 placeholder="Menşei ülke"
               />
             </div>
-            
+
             <div className="form-group">
               <label className="form-label">Gross Weight</label>
               <input
@@ -672,7 +672,7 @@ const OrderConfirmationForm = ({ selectedLanguage }) => {
                 placeholder="Brüt ağırlık"
               />
             </div>
-            
+
             <div className="form-group">
               <label className="form-label">Net Weight</label>
               <input
@@ -683,7 +683,7 @@ const OrderConfirmationForm = ({ selectedLanguage }) => {
                 placeholder="Net ağırlık"
               />
             </div>
-            
+
             <div className="form-group">
               <label className="form-label">Rolls</label>
               <input
@@ -719,7 +719,7 @@ const OrderConfirmationForm = ({ selectedLanguage }) => {
               + Yeni Ürün Ekle
             </button>
           </div>
-          
+
           {goods.map((item, index) => (
             <div key={item.id} className="goods-item">
               <div className="goods-item-header">
@@ -734,7 +734,7 @@ const OrderConfirmationForm = ({ selectedLanguage }) => {
                   </button>
                 )}
               </div>
-              
+
               <div className="goods-container">
                 <div className="goods-grid-row">
                   <div className="form-group">
@@ -747,7 +747,7 @@ const OrderConfirmationForm = ({ selectedLanguage }) => {
                       placeholder="Ürün numarası"
                     />
                   </div>
-                  
+
                   <div className="form-group">
                     <label className="form-label">WEIGHT / WIDHT</label>
                     <input
@@ -758,7 +758,7 @@ const OrderConfirmationForm = ({ selectedLanguage }) => {
                       placeholder="Ağırlık / Genişlik"
                     />
                   </div>
-                  
+
                   <div className="form-group">
                     <label className="form-label">QUANTITY (METERS)</label>
                     <input
@@ -771,7 +771,7 @@ const OrderConfirmationForm = ({ selectedLanguage }) => {
                     />
                   </div>
                 </div>
-                
+
                 <div className="goods-grid-row">
                   <div className="form-group">
                     <label className="form-label">PRICE</label>
@@ -783,7 +783,7 @@ const OrderConfirmationForm = ({ selectedLanguage }) => {
                       placeholder="Birim fiyat (USD/EUR) Belirtiniz"
                     />
                   </div>
-                  
+
                   <div className="form-group">
                     <label className="form-label">AMOUNT</label>
                     <div style={{ display: 'flex', gap: '10px' }}>
@@ -793,7 +793,6 @@ const OrderConfirmationForm = ({ selectedLanguage }) => {
                         value={item['AMOUNT']}
                         onChange={(e) => handleGoodsChange(item.id, 'AMOUNT', e.target.value)}
                         placeholder="Toplam tutar (otom. hesaplanır)"
-                        readOnly
                         style={{ backgroundColor: '#f8f9fa', cursor: 'default', flex: '1' }}
                       />
                       <select
