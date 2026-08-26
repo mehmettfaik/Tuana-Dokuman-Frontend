@@ -139,6 +139,13 @@ const RecipientManager = ({ onRecipientSelect, selectedRecipient }) => {
       });
 
       if (!response.ok) {
+        // 409 Conflict - aynı şirket adı zaten mevcut
+        if (response.status === 409) {
+          const errorData = await response.json().catch(() => null);
+          const existingName = errorData?.existingRecipient?.companyName || '';
+          alert(`Bu şirket adı zaten kayıtlı: "${existingName || recipientData.companyName}"\nLütfen farklı bir şirket adı girin veya mevcut kaydı güncelleyin.`);
+          return;
+        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
