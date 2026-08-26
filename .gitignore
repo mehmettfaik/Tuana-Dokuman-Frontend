@@ -47,3 +47,5 @@ Thumbs.db
 # Build outputs
 dist/
 build/
+
+.DS_Store
