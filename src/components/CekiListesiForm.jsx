@@ -23,13 +23,15 @@ const CekiListesiForm = ({ selectedLanguage }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
 
-  // Kg sütunları gösterim kontrolü
+  // Sütunlar gösterim kontrolü
+  const [showLot, setShowLot] = useState(true);
+  const [showUretimNo, setShowUretimNo] = useState(false);
   const [showNetKg, setShowNetKg] = useState(false);
   const [showBrutKg, setShowBrutKg] = useState(false);
 
   // Excel tarzı basit tablo - sadece Metre ve Lot
   const [rows, setRows] = useState([
-    { id: 1, metre: '', lot: '', brutKg: '', netKg: '' }
+    { id: 1, metre: '', lot: '', uretimNo: '', brutKg: '', netKg: '' }
   ]);
 
   const tableRef = useRef(null);
@@ -104,7 +106,7 @@ const CekiListesiForm = ({ selectedLanguage }) => {
   // Satır ekleme
   const addRow = () => {
     const newId = rows.length > 0 ? Math.max(...rows.map(r => r.id)) + 1 : 1;
-    setRows(prev => [...prev, { id: newId, metre: '', lot: '', brutKg: '', netKg: '' }]);
+    setRows(prev => [...prev, { id: newId, metre: '', lot: '', uretimNo: '', brutKg: '', netKg: '' }]);
   };
 
   // Satır silme
@@ -142,7 +144,7 @@ const CekiListesiForm = ({ selectedLanguage }) => {
       }
     } else if (e.key === 'Tab' && !e.shiftKey && rowIndex === rows.length - 1) {
       // Son sütunda Tab basıldığında yeni satır ekle
-      const lastField = showBrutKg || showNetKg ? (showNetKg ? 'netKg' : 'brutKg') : 'lot';
+      const lastField = showNetKg ? 'netKg' : (showBrutKg ? 'brutKg' : (showUretimNo ? 'uretimNo' : (showLot ? 'lot' : 'metre')));
       if (field === lastField) {
         e.preventDefault();
         addRow();
@@ -184,6 +186,8 @@ const CekiListesiForm = ({ selectedLanguage }) => {
       const formPayload = {
         ...formData,
         rows,
+        showLot,
+        showUretimNo,
         showNetKg,
         showBrutKg,
         language: selectedLanguage,
@@ -227,9 +231,11 @@ const CekiListesiForm = ({ selectedLanguage }) => {
         
         const rowsData = savedData.rows || record.rows;
         if (rowsData) {
-          // Eski kayıtlar için brutKg ve netKg alanlarını ekle
+          // Eski kayıtlar için alanları ekle
           const updatedRows = rowsData.map(row => ({
             ...row,
+            lot: row.lot || '',
+            uretimNo: row.uretimNo || '',
             brutKg: row.brutKg || '',
             netKg: row.netKg || ''
           }));
@@ -237,6 +243,8 @@ const CekiListesiForm = ({ selectedLanguage }) => {
         }
         
         // Checkbox durumlarını yükle (hem record hem de savedData'dan kontrol et)
+        setShowLot(savedData.showLot !== undefined ? savedData.showLot : (record.showLot !== undefined ? record.showLot : true));
+        setShowUretimNo(savedData.showUretimNo || record.showUretimNo || false);
         setShowNetKg(savedData.showNetKg || record.showNetKg || false);
         setShowBrutKg(savedData.showBrutKg || record.showBrutKg || false);
         
@@ -244,6 +252,8 @@ const CekiListesiForm = ({ selectedLanguage }) => {
         setInitialDataStr(JSON.stringify({ 
            ...savedData,
            rows: rowsData,
+           showLot: savedData.showLot !== undefined ? savedData.showLot : (record.showLot !== undefined ? record.showLot : true),
+           showUretimNo: savedData.showUretimNo || record.showUretimNo || false,
            showNetKg: savedData.showNetKg || record.showNetKg || false,
            showBrutKg: savedData.showBrutKg || record.showBrutKg || false
         }));
@@ -283,7 +293,9 @@ const CekiListesiForm = ({ selectedLanguage }) => {
       desenNo: '',
       not: '',
     });
-    setRows([{ id: 1, metre: '', lot: '', brutKg: '', netKg: '' }]);
+    setRows([{ id: 1, metre: '', lot: '', uretimNo: '', brutKg: '', netKg: '' }]);
+    setShowLot(true);
+    setShowUretimNo(false);
     setShowNetKg(false);
     setShowBrutKg(false);
     setSelectedFormId(null);
@@ -292,7 +304,7 @@ const CekiListesiForm = ({ selectedLanguage }) => {
   // PDF oluştur
   const handleGeneratePDF = async () => {
     try {
-      await generatePDFWithHook({ formType: 'ceki-listesi', formData, rows, showNetKg, showBrutKg }, 'ceki-listesi', selectedLanguage);
+      await generatePDFWithHook({ formType: 'ceki-listesi', formData, rows, showLot, showUretimNo, showNetKg, showBrutKg }, 'ceki-listesi', selectedLanguage);
       setSuccess('PDF oluşturuldu!');
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
@@ -324,6 +336,8 @@ const CekiListesiForm = ({ selectedLanguage }) => {
         body: JSON.stringify({
           ...formData,
           rows,
+          showLot,
+          showUretimNo,
           showNetKg,
           showBrutKg,
           language: selectedLanguage
@@ -451,8 +465,24 @@ const CekiListesiForm = ({ selectedLanguage }) => {
         />
       </div>
 
-      {/* Kg Sütunları Kontrol */}
+      {/* Sütunları Kontrol */}
       <div className="kg-controls">
+        <label className="checkbox-label">
+          <input 
+            type="checkbox" 
+            checked={showLot} 
+            onChange={(e) => setShowLot(e.target.checked)}
+          />
+          <span>Lot Ekle</span>
+        </label>
+        <label className="checkbox-label">
+          <input 
+            type="checkbox" 
+            checked={showUretimNo} 
+            onChange={(e) => setShowUretimNo(e.target.checked)}
+          />
+          <span>Üretim No Ekle</span>
+        </label>
         <label className="checkbox-label">
           <input 
             type="checkbox" 
@@ -478,7 +508,8 @@ const CekiListesiForm = ({ selectedLanguage }) => {
             <tr>
               <th className="col-no">#</th>
               <th className="col-metre">Metre</th>
-              <th className="col-lot">Lot</th>
+              {showLot && <th className="col-lot">Lot</th>}
+              {showUretimNo && <th className="col-uretim">Üretim No</th>}
               {showBrutKg && <th className="col-kg">Brüt Kg</th>}
               {showNetKg && <th className="col-kg">Net Kg</th>}
               <th className="col-del"></th>
@@ -500,17 +531,32 @@ const CekiListesiForm = ({ selectedLanguage }) => {
                     placeholder="0.00"
                   />
                 </td>
-                <td className="cell">
-                  <input
-                    type="text"
-                    value={row.lot}
-                    onChange={(e) => handleCellChange(row.id, 'lot', e.target.value)}
-                    onKeyDown={(e) => handleKeyDown(e, idx, 'lot')}
-                    data-row={idx}
-                    data-field="lot"
-                    placeholder="Lot no"
-                  />
-                </td>
+                {showLot && (
+                  <td className="cell">
+                    <input
+                      type="text"
+                      value={row.lot}
+                      onChange={(e) => handleCellChange(row.id, 'lot', e.target.value)}
+                      onKeyDown={(e) => handleKeyDown(e, idx, 'lot')}
+                      data-row={idx}
+                      data-field="lot"
+                      placeholder="Lot no"
+                    />
+                  </td>
+                )}
+                {showUretimNo && (
+                  <td className="cell">
+                    <input
+                      type="text"
+                      value={row.uretimNo}
+                      onChange={(e) => handleCellChange(row.id, 'uretimNo', e.target.value)}
+                      onKeyDown={(e) => handleKeyDown(e, idx, 'uretimNo')}
+                      data-row={idx}
+                      data-field="uretimNo"
+                      placeholder="Üretim no"
+                    />
+                  </td>
+                )}
                 {showBrutKg && (
                   <td className="cell">
                     <input
@@ -549,7 +595,8 @@ const CekiListesiForm = ({ selectedLanguage }) => {
             <tr>
               <td className="foot-label">Toplam:</td>
               <td className="foot-total">{totalMetre.toFixed(2)} m</td>
-              <td></td>
+              {showLot && <td></td>}
+              {showUretimNo && <td></td>}
               {showBrutKg && <td className="foot-total">{totalBrutKg.toFixed(2)} kg</td>}
               {showNetKg && <td className="foot-total">{totalNetKg.toFixed(2)} kg</td>}
               <td></td>
