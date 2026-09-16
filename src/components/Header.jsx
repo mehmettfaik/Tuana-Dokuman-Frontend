@@ -272,6 +272,19 @@ const Header = ({ selectedLanguage, setSelectedLanguage, globalLang, onGlobalLan
                   </svg>
                 </button>
               </div>
+              
+              <div className="nav-item">
+                <button
+                  className="nav-button"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    window.open('https://platform.tuanatex.com', '_blank');
+                  }}
+                >
+                  TUANA PLATFORM
+                </button>
+              </div>
+
               {Object.entries(menuItems).map(([key, menu]) => (
                 <div
                   key={key}
