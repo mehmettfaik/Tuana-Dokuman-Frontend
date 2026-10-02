@@ -515,6 +515,25 @@
 .saved-forms-list {
   display: grid;
   gap: 15px;
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 5px; /* Scrollbar için biraz boşluk */
+}
+
+/* Custom scrollbar for better look */
+.saved-forms-list::-webkit-scrollbar {
+  width: 6px;
+}
+.saved-forms-list::-webkit-scrollbar-track {
+  background: #f1f1f1; 
+  border-radius: 4px;
+}
+.saved-forms-list::-webkit-scrollbar-thumb {
+  background: #c1c1c1; 
+  border-radius: 4px;
+}
+.saved-forms-list::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8; 
 }
 
 .saved-form-item {
